@@ -8,6 +8,8 @@ import {
 /**
  * AETHER DECK - Modular TCG/Tarot System (v2.1 Glitchworks Edition)
  * Base App Component for glitchworks-tarot repo
+ *
+ * data-testid convention: `aether-<area>-<element>` — see docs/TESTIDS.md
  */
 
 // --- GLOBAL GLITCH STYLES ---
@@ -343,7 +345,7 @@ export default function App() {
 
   // --- VIEWS ---
   const renderDexView = () => (
-    <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pb-24">
+    <div data-testid="aether-view-dex" className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pb-24">
       {deck.map(card => (
         <div key={card.id} className="flex justify-center transform hover:-translate-y-2 transition-transform duration-300">
           <Card data={card} isFlipped={true} onClick={() => setSelectedCard(card)} />
@@ -353,7 +355,7 @@ export default function App() {
   );
 
   const renderArenaView = () => (
-    <div className="flex flex-col h-full p-4 max-w-4xl mx-auto">
+    <div data-testid="aether-view-arena" className="flex flex-col h-full p-4 max-w-4xl mx-auto">
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 my-4">
         
         {/* Alpha Slot */}
@@ -368,11 +370,13 @@ export default function App() {
 
         {/* Console / Controls */}
         <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
-          <div className={`w-full md:min-w-[240px] bg-black/80 backdrop-blur p-4 rounded border ${isClashing ? 'border-red-500 text-red-500' : 'border-white/10 text-indigo-300'} text-center transition-colors`}>
+          <div className={`w-full md:min-w-[240px] bg-black/80 backdrop-blur p-4 rounded border ${isClashing ? 'border-red-500 text-red-500' : 'border-white/10 text-indigo-300'} text-center transition-colors`} data-testid="aether-arena-log">
             <p className={`text-xs font-mono uppercase tracking-wider ${isClashing ? 'glitch-hover animate-pulse' : ''}`}>{battleLog}</p>
           </div>
           
           <button 
+            type="button"
+            data-testid="aether-arena-clash"
             onClick={resolveBattle} 
             disabled={!arenaSlots.p1 || !arenaSlots.p2 || isClashing}
             className={`w-full md:w-auto px-8 py-3 rounded-none border border-transparent font-bold tracking-widest transition-all ${
@@ -384,7 +388,7 @@ export default function App() {
             {isClashing ? 'PROCESSING...' : 'INITIATE CLASH'}
           </button>
           
-          <button onClick={clearArena} className="text-[10px] font-mono text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 px-2 py-1 rounded">
+          <button type="button" data-testid="aether-arena-flush" onClick={clearArena} className="text-[10px] font-mono text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 px-2 py-1 rounded">
             Flush_Memory
           </button>
         </div>
@@ -416,7 +420,7 @@ export default function App() {
   );
 
   const renderOracleView = () => (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] gap-12 p-4">
+    <div data-testid="aether-view-oracle" className="flex flex-col items-center justify-center min-h-[80vh] gap-12 p-4">
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-light text-indigo-300 glitch-text tracking-widest">THE ORACLE</h2>
         <p className="text-white/40 font-mono text-xs max-w-md mx-auto">Accessing probabilistic timelines...</p>
@@ -441,7 +445,7 @@ export default function App() {
         )}
       </div>
 
-      <button onClick={drawSpread} className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group">
+      <button type="button" data-testid="aether-oracle-draw" onClick={drawSpread} className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group">
         <Shuffle size={16} className="group-hover:animate-spin" />
         {spread.length > 0 ? 'RECALCULATE' : 'INITIALIZE SEQUENCE'}
       </button>
@@ -449,14 +453,14 @@ export default function App() {
   );
 
   const renderForgeView = () => (
-    <div className="flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-16 p-4 md:p-8 max-w-6xl mx-auto min-h-[80vh]">
+    <div data-testid="aether-view-forge" className="flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-16 p-4 md:p-8 max-w-6xl mx-auto min-h-[80vh]">
       <div className="flex flex-col items-center gap-6 lg:sticky lg:top-24 order-1 lg:order-2 w-full lg:w-auto">
         <div className="bg-emerald-900/20 border border-emerald-500/30 px-4 py-1 rounded text-emerald-400 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
           Live Preview
         </div>
         <Card data={forgeData} isFlipped={true} />
-        <button onClick={saveForgeCard} className="w-64 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded font-bold font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all active:scale-95 hover:border-emerald-300 border border-transparent">
+        <button type="button" data-testid="aether-forge-compile" onClick={saveForgeCard} className="w-64 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded font-bold font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all active:scale-95 hover:border-emerald-300 border border-transparent">
           <Save size={18} /> COMPILE ENTITY
         </button>
       </div>
@@ -540,16 +544,16 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden">
+    <div data-testid="aether-root" className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden">
       <GlitchStyles />
       <div className="noise-overlay"></div>
       <div className="crt-overlay"></div>
       
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-white/20 p-6 md:p-8 rounded-xl max-w-sm w-full shadow-2xl space-y-8 relative">
-            <button onClick={() => setShowSettings(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+        <div data-testid="aether-modal-settings" className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div data-testid="aether-modal-settings-panel" className="bg-slate-900 border border-white/20 p-6 md:p-8 rounded-xl max-w-sm w-full shadow-2xl space-y-8 relative">
+            <button type="button" data-testid="aether-settings-close" onClick={() => setShowSettings(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
               <X size={24} />
             </button>
             <div>
@@ -566,14 +570,14 @@ export default function App() {
       )}
 
       {/* Nav */}
-      <nav className="fixed bottom-0 md:top-0 md:bottom-auto w-full z-50 bg-black/80 backdrop-blur-xl border-t md:border-b md:border-t-0 border-white/10 px-4 pt-3 pb-6 md:py-3 shadow-2xl">
+      <nav data-testid="aether-nav" className="fixed bottom-0 md:top-0 md:bottom-auto w-full z-50 bg-black/80 backdrop-blur-xl border-t md:border-b md:border-t-0 border-white/10 px-4 pt-3 pb-6 md:py-3 shadow-2xl">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0">
           <div className="flex w-full md:w-auto justify-between items-center">
             <div className="flex items-center gap-2 group cursor-pointer">
               <Layers className="text-indigo-500 group-hover:animate-spin" />
               <span className="font-bold tracking-tighter text-xl glitch-hover">GLITCH<span className="font-light text-white/50">WORKS</span></span>
             </div>
-            <button onClick={() => setShowSettings(true)} className="md:hidden text-white/50 hover:text-indigo-400 p-2">
+            <button type="button" data-testid="aether-settings-open" onClick={() => setShowSettings(true)} className="md:hidden text-white/50 hover:text-indigo-400 p-2">
               <Settings size={20} />
             </button>
           </div>
@@ -588,6 +592,8 @@ export default function App() {
                 { id: 'forge', icon: Hammer, color: 'emerald' }
               ].map(btn => (
                 <button 
+                  type="button"
+                  data-testid={`aether-nav-${btn.id}`}
                   key={btn.id}
                   onClick={() => setView(btn.id)} 
                   className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full text-xs font-mono uppercase tracking-widest transition-all flex items-center gap-2 border ${
@@ -603,14 +609,14 @@ export default function App() {
               <div className="w-8 shrink-0 md:hidden" /> {/* Spacer to allow full scroll visibility */}
             </div>
             
-            <button onClick={() => setShowSettings(true)} className="hidden md:flex text-white/40 hover:text-indigo-400 p-2 ml-2 bg-slate-900/50 rounded-full border border-transparent hover:border-white/10 transition-colors">
+            <button type="button" data-testid="aether-settings-open-desktop" onClick={() => setShowSettings(true)} className="hidden md:flex text-white/40 hover:text-indigo-400 p-2 ml-2 bg-slate-900/50 rounded-full border border-transparent hover:border-white/10 transition-colors">
               <Settings size={18} />
             </button>
           </div>
         </div>
       </nav>
 
-      <main className="relative z-10 pt-4 md:pt-28 pb-32 md:pb-12 max-w-6xl mx-auto min-h-screen">
+      <main data-testid="aether-main" className="relative z-10 pt-4 md:pt-28 pb-32 md:pb-12 max-w-6xl mx-auto min-h-screen">
         {view === 'dex' && renderDexView()}
         {view === 'arena' && renderArenaView()}
         {view === 'oracle' && renderOracleView()}
@@ -619,9 +625,9 @@ export default function App() {
 
       {/* Card Details Modal */}
       {selectedCard && view === 'dex' && (
-        <div className="fixed inset-0 z-[900] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200" onClick={() => setSelectedCard(null)}>
+        <div data-testid="aether-modal-card" className="fixed inset-0 z-[900] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200" onClick={() => setSelectedCard(null)}>
           <div className="relative transform transition-transform animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-            <button className="absolute -top-16 right-0 text-white/50 hover:text-white transition-colors bg-white/5 p-2 rounded-full border border-white/10" onClick={() => setSelectedCard(null)}>
+            <button type="button" data-testid="aether-modal-card-close" className="absolute -top-16 right-0 text-white/50 hover:text-white transition-colors bg-white/5 p-2 rounded-full border border-white/10" onClick={() => setSelectedCard(null)}>
               <X size={24} />
             </button>
             <Card data={selectedCard} isFlipped={true} size="lg" />
