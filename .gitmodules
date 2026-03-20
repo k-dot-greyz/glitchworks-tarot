@@ -1,0 +1,4 @@
+[submodule "dev-master"]
+	path = dev-master
+	url = git@github.com:k-dot-greyz/dev-master.git
+	branch = main
