@@ -1,5 +1,8 @@
 name: CI/CD Pipeline
 
+env:
+  NPM_FLAGS: --legacy-peer-deps
+
 on:
   push:
     branches: [main, master]
@@ -12,12 +15,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci ${{ env.NPM_FLAGS }}
       - name: Lint code
         run: npm run lint
       - name: Run tests
@@ -36,12 +41,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci ${{ env.NPM_FLAGS }}
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -62,6 +69,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
