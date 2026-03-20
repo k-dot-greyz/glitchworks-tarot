@@ -2,28 +2,43 @@
   "name": "glitchhub-tarot",
   "version": "1.0.0",
   "description": "Dark mode glitch art tarot card generator - dev-master setup",
-  "main": "src/index.jsx",
+  "main": "src/main.jsx",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src --ext .js,.jsx",
-    "test": "vitest",
+    "lint": "eslint src",
+    "test": "vitest run",
     "commitlint": "commitlint",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "lucide-react": "^0.577.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.0.0",
     "@commitlint/config-conventional": "^18.0.0",
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "^4.0.0",
-    "eslint": "^8.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^10.0.3",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
     "husky": "^8.0.0",
+    "jsdom": "^29.0.1",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
     "vite": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^4.1.0"
   }
 }
-
