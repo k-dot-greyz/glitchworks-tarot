@@ -16,3 +16,8 @@ coverage/
 .next/
 out/
 
+
+# Playwright / E2E
+playwright-report/
+test-results/
+.playwright/
