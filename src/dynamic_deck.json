@@ -1,0 +1,240 @@
+[
+  {
+    "id": "000",
+    "name": "The Fool",
+    "sub": "Sync: Hako Yamazaki",
+    "type": "void",
+    "stats": {
+      "atk": 10,
+      "def": 10,
+      "spd": 99
+    },
+    "desc": "A blank slate. The beginning of a journey. Unbound by structure. Resonance detected with Hako Yamazaki (25 scrobbles).",
+    "image": "text-indigo-400",
+    "icon": "Sparkles"
+  },
+  {
+    "id": "001",
+    "name": "The Magician",
+    "sub": "Sync: JAMEZY",
+    "type": "fire",
+    "stats": {
+      "atk": 70,
+      "def": 40,
+      "spd": 82
+    },
+    "desc": "As above, so below. Converting will into reality through action. Resonance detected with JAMEZY (12 scrobbles).",
+    "image": "text-red-400",
+    "icon": "Flame"
+  },
+  {
+    "id": "002",
+    "name": "High Priestess",
+    "sub": "Sync: Synthetic Epiphany",
+    "type": "water",
+    "stats": {
+      "atk": 45,
+      "def": 95,
+      "spd": 67
+    },
+    "desc": "The mystery behind the veil. Trust the silence within. Resonance detected with Synthetic Epiphany (7 scrobbles).",
+    "image": "text-blue-400",
+    "icon": "Droplets"
+  },
+  {
+    "id": "003",
+    "name": "The Empress",
+    "sub": "Sync: Nova Koma",
+    "type": "wind",
+    "stats": {
+      "atk": 40,
+      "def": 80,
+      "spd": 56
+    },
+    "desc": "Fertility of mind and spirit. Nature in its digital bloom. Resonance detected with Nova Koma (6 scrobbles).",
+    "image": "text-emerald-400",
+    "icon": "Sparkles"
+  },
+  {
+    "id": "004",
+    "name": "The Emperor",
+    "sub": "Sync: EJ Kitto",
+    "type": "electric",
+    "stats": {
+      "atk": 35,
+      "def": 80,
+      "spd": 45
+    },
+    "desc": "Structure and solidity. The foundation upon which empires are built. Resonance detected with EJ Kitto (5 scrobbles).",
+    "image": "text-yellow-400",
+    "icon": "Zap"
+  },
+  {
+    "id": "005",
+    "name": "The Hierophant",
+    "sub": "Sync: Infected Mushroom",
+    "type": "void",
+    "stats": {
+      "atk": 10,
+      "def": 70,
+      "spd": 84
+    },
+    "desc": "Traditional wisdom and systemic knowledge. The bridge to the divine API. Resonance detected with Infected Mushroom (4 scrobbles).",
+    "image": "text-indigo-200",
+    "icon": "Shield"
+  },
+  {
+    "id": "006",
+    "name": "The Lovers",
+    "sub": "Sync: Fred again..",
+    "type": "fire",
+    "stats": {
+      "atk": 30,
+      "def": 40,
+      "spd": 64
+    },
+    "desc": "Perfect harmony of opposing forces. Choice based on shared frequency. Resonance detected with Fred again.. (4 scrobbles).",
+    "image": "text-pink-400",
+    "icon": "Sparkles"
+  },
+  {
+    "id": "007",
+    "name": "The Chariot",
+    "sub": "Sync: Bladerunner",
+    "type": "wind",
+    "stats": {
+      "atk": 25,
+      "def": 60,
+      "spd": 98
+    },
+    "desc": "Victory through discipline. Moving forward despite opposing forces. Resonance detected with Bladerunner (3 scrobbles).",
+    "image": "text-teal-400",
+    "icon": "Wind"
+  },
+  {
+    "id": "008",
+    "name": "Strength",
+    "sub": "Sync: Zeitgeist",
+    "type": "fire",
+    "stats": {
+      "atk": 25,
+      "def": 90,
+      "spd": 43
+    },
+    "desc": "Inner power and compassionate control. Taming the glitch within. Resonance detected with Zeitgeist (3 scrobbles).",
+    "image": "text-orange-400",
+    "icon": "Shield"
+  },
+  {
+    "id": "009",
+    "name": "The Hermit",
+    "sub": "Sync: The Polish Ambassador",
+    "type": "void",
+    "stats": {
+      "atk": 10,
+      "def": 70,
+      "spd": 83
+    },
+    "desc": "Seeking the light within. Solitude is the forge of wisdom. Resonance detected with The Polish Ambassador (3 scrobbles).",
+    "image": "text-purple-400",
+    "icon": "Eye"
+  },
+  {
+    "id": "010",
+    "name": "Wheel of Fortune",
+    "sub": "Sync: Just A Gent",
+    "type": "electric",
+    "stats": {
+      "atk": 25,
+      "def": 50,
+      "spd": 53
+    },
+    "desc": "The inevitable spin of the system. Cycles of data and destiny. Resonance detected with Just A Gent (3 scrobbles).",
+    "image": "text-amber-400",
+    "icon": "RotateCcw"
+  },
+  {
+    "id": "011",
+    "name": "Justice",
+    "sub": "Sync: Matt Mason",
+    "type": "void",
+    "stats": {
+      "atk": 40,
+      "def": 40,
+      "spd": 83
+    },
+    "desc": "Fairness and systemic balance. Cause and effect in perfect sync. Resonance detected with Matt Mason (3 scrobbles).",
+    "image": "text-blue-200",
+    "icon": "Shield"
+  },
+  {
+    "id": "013",
+    "name": "Death",
+    "sub": "Sync: David Bowie",
+    "type": "dark",
+    "stats": {
+      "atk": 25,
+      "def": 10,
+      "spd": 53
+    },
+    "desc": "The end of a cycle. Clearing the old to make space for the new. Resonance detected with David Bowie (3 scrobbles).",
+    "image": "text-gray-400",
+    "icon": "Skull"
+  },
+  {
+    "id": "017",
+    "name": "The Star",
+    "sub": "Sync: Meridian",
+    "type": "electric",
+    "stats": {
+      "atk": 25,
+      "def": 50,
+      "spd": 83
+    },
+    "desc": "Renewal and inspiration. The calm after the storm. Resonance detected with Meridian (3 scrobbles).",
+    "image": "text-yellow-200",
+    "icon": "Star"
+  },
+  {
+    "id": "018",
+    "name": "The Moon",
+    "sub": "Sync: DEGS",
+    "type": "water",
+    "stats": {
+      "atk": 25,
+      "def": 30,
+      "spd": 73
+    },
+    "desc": "The subconscious realm. Navigating the shadows of the network. Resonance detected with DEGS (3 scrobbles).",
+    "image": "text-blue-100",
+    "icon": "Eye"
+  },
+  {
+    "id": "019",
+    "name": "The Sun",
+    "sub": "Sync: Denver UK",
+    "type": "fire",
+    "stats": {
+      "atk": 25,
+      "def": 70,
+      "spd": 83
+    },
+    "desc": "Absolute clarity and vital energy. The system at peak performance. Resonance detected with Denver UK (3 scrobbles).",
+    "image": "text-yellow-500",
+    "icon": "Sparkles"
+  },
+  {
+    "id": "404",
+    "name": "The Glitch",
+    "sub": "Sync: Drz",
+    "type": "dark",
+    "stats": {
+      "atk": 25,
+      "def": 99,
+      "spd": 99
+    },
+    "desc": "A systematic error that became an entity. Reality is a suggestion. Resonance detected with Drz (3 scrobbles).",
+    "image": "text-pink-600",
+    "icon": "Zap"
+  }
+]

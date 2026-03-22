@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
+import INITIAL_DECK from './dynamic_deck.json';
 import {
   Sword, Shield, Zap, Flame, Droplets, Wind,
   Sparkles, Skull, Eye, RotateCcw, Layers,
   LayoutGrid, X, Shuffle, Star, Hammer, Save, Settings, Upload, EyeOff
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 /**
  * AETHER DECK - Modular TCG/Tarot System (v2.1 Glitchworks Edition)
  * Base App Component for glitchworks-tarot repo
- *
+ * 
  * data-testid convention: `aether-<area>-<element>` — see docs/TESTIDS.md
  */
 
@@ -19,8 +22,9 @@ const GlitchStyles = () => (
       --glitch-int: 0.5;
       --crt-opacity: 0.3;
       --noise-opacity: 0.15;
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     }
-    
+
     .crt-overlay {
       pointer-events: none;
       position: fixed;
@@ -54,7 +58,7 @@ const GlitchStyles = () => (
     .glitch-hover:hover {
       animation: rgb-split 0.2s steps(2, end) infinite;
     }
-    
+
     .glitch-text {
       text-shadow: calc(var(--glitch-int) * 2px) 0px 0px rgba(255,0,0,0.5), 
                    calc(var(--glitch-int) * -2px) 0px 0px rgba(0,255,255,0.5);
@@ -81,18 +85,15 @@ const GlitchStyles = () => (
     }
   `}</style>
 );
-
 // --- DATA MOCKUP ---
-const INITIAL_DECK = [
-  { id: '001', name: 'The Fool', sub: 'Infinite Potential', type: 'void', stats: { atk: 10, def: 10, spd: 90 }, desc: 'A blank slate. The beginning of a journey. Unbound by structure.', image: 'text-indigo-400', icon: 'Sparkles' },
-  { id: '002', name: 'The Magician', sub: 'Manifestation', type: 'fire', stats: { atk: 85, def: 40, spd: 70 }, desc: 'As above, so below. Converting will into reality through action.', image: 'text-red-400', icon: 'Flame' },
-  { id: '003', name: 'High Priestess', sub: 'Intuition', type: 'water', stats: { atk: 20, def: 95, spd: 60 }, desc: 'The mystery behind the veil. Trust the silence within.', image: 'text-blue-400', icon: 'Droplets' },
-  { id: '004', name: 'The Emperor', sub: 'Authority', type: 'electric', stats: { atk: 80, def: 80, spd: 40 }, desc: 'Structure and solidity. The foundation upon which empires are built.', image: 'text-yellow-400', icon: 'Zap' },
-  { id: '005', name: 'Death', sub: 'Transformation', type: 'dark', stats: { atk: 99, def: 10, spd: 50 }, desc: 'The end of a cycle. Clearing the old to make space for the new.', image: 'text-gray-400', icon: 'Skull' },
-  { id: '006', name: 'The Chariot', sub: 'Willpower', type: 'wind', stats: { atk: 75, def: 60, spd: 95 }, desc: 'Victory through discipline. Moving forward despite opposing forces.', image: 'text-teal-400', icon: 'Wind' },
-  { id: '007', name: 'The Hermit', sub: 'Introspection', type: 'void', stats: { atk: 30, def: 90, spd: 20 }, desc: 'Seeking the light within. Solitude is the forge of wisdom.', image: 'text-purple-400', icon: 'Eye' },
-  { id: '008', name: 'The Star', sub: 'Hope', type: 'electric', stats: { atk: 50, def: 50, spd: 80 }, desc: 'Renewal and inspiration. The calm after the storm.', image: 'text-yellow-200', icon: 'Star' }
-];
+const ELEMENTAL_ADVANTAGE = {
+  fire: { wind: 1.5, electric: 1.2 },
+  wind: { electric: 1.5, water: 1.2 },
+  electric: { water: 1.5, fire: 1.2 },
+  water: { fire: 1.5, wind: 1.2 },
+  void: { fire: 1.1, water: 1.1, electric: 1.1, wind: 1.1, dark: 2.0 },
+  dark: { fire: 1.2, water: 1.2, electric: 1.2, wind: 1.2 },
+};
 
 // --- UTILS ---
 const getTypeColor = (type) => {
@@ -240,9 +241,17 @@ const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, clashin
 
 export default function App() {
   const [view, setView] = useState('dex'); // 'dex', 'arena', 'oracle', 'forge'
-  const [deck, setDeck] = useState(INITIAL_DECK);
+  const [deck, setDeck] = useState(() => {
+    const saved = localStorage.getItem('aether-deck');
+    return saved ? JSON.parse(saved) : INITIAL_DECK;
+  });
   const [selectedCard, setSelectedCard] = useState(null);
   
+  // Persistence
+  useEffect(() => {
+    localStorage.setItem('aether-deck', JSON.stringify(deck));
+  }, [deck]);
+
   // Settings / Aesthetics State
   const [showSettings, setShowSettings] = useState(false);
   const [aesthetics, setAesthetics] = useState({
@@ -281,6 +290,14 @@ export default function App() {
     document.documentElement.style.setProperty('--noise-opacity', aesthetics.noise / 100);
   }, [aesthetics]);
 
+  // Capacitor Mobile Integrations
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: Style.Dark });
+      StatusBar.setBackgroundColor({ color: '#020617' }); // slate-950
+    }
+  }, []);
+
   // --- HANDLERS ---
   const handleArenaSelect = (card) => {
     if (isClashing) return;
@@ -300,14 +317,20 @@ export default function App() {
     setBattleLog("[ ERR: DATA COLLISION DETECTED ]");
 
     setTimeout(() => {
-      const p1Score = arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd;
-      const p2Score = arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd;
-      const result =
-        p1Score > p2Score
-          ? `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}`
-          : p2Score > p1Score
-            ? `> ${arenaSlots.p2.name.toUpperCase()} OVERWRITES ${arenaSlots.p1.name.toUpperCase()}`
-            : "> EQUILIBRIUM ACHIEVED. NO DELETION.";
+      const p1Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p1.type]?.[arenaSlots.p2.type] || 1.0;
+      const p2Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p2.type]?.[arenaSlots.p1.type] || 1.0;
+
+      const p1Score = (arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd) * p1Advantage;
+      const p2Score = (arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd) * p2Advantage;
+      
+      let result = "";
+      if (p1Score > p2Score) {
+        result = `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}${p1Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
+      } else if (p2Score > p1Score) {
+        result = `> ${arenaSlots.p2.name.toUpperCase()} OVERWRITES ${arenaSlots.p1.name.toUpperCase()}${p2Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
+      } else {
+        result = "> EQUILIBRIUM ACHIEVED. NO DELETION.";
+      }
 
       setBattleLog(result);
       setIsClashing(false);
@@ -570,7 +593,7 @@ export default function App() {
       )}
 
       {/* Nav */}
-      <nav data-testid="aether-nav" className="fixed bottom-0 md:top-0 md:bottom-auto w-full z-50 bg-black/80 backdrop-blur-xl border-t md:border-b md:border-t-0 border-white/10 px-4 pt-3 pb-6 md:py-3 shadow-2xl">
+      <nav data-testid="aether-nav" className="fixed bottom-0 md:top-0 md:bottom-auto w-full z-50 bg-black/80 backdrop-blur-xl border-t md:border-b md:border-t-0 border-white/10 px-4 pt-3 pb-[calc(1.5rem+var(--safe-area-inset-bottom))] md:py-3 shadow-2xl">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0">
           <div className="flex w-full md:w-auto justify-between items-center">
             <div className="flex items-center gap-2 group cursor-pointer">
