@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import INITIAL_DECK from './dynamic_deck.json';
 import {
   Sword, Shield, Zap, Flame, Droplets, Wind,
   Sparkles, Skull, Eye, RotateCcw, Layers,
@@ -85,25 +86,14 @@ const GlitchStyles = () => (
   `}</style>
 );
 // --- DATA MOCKUP ---
-const INITIAL_DECK = [
-  { id: '000', name: 'The Fool', sub: 'Infinite Potential', type: 'void', stats: { atk: 10, def: 10, spd: 90 }, desc: 'A blank slate. The beginning of a journey. Unbound by structure.', image: 'text-indigo-400', icon: 'Sparkles' },
-  { id: '001', name: 'The Magician', sub: 'Manifestation', type: 'fire', stats: { atk: 85, def: 40, spd: 70 }, desc: 'As above, so below. Converting will into reality through action.', image: 'text-red-400', icon: 'Flame' },
-  { id: '002', name: 'High Priestess', sub: 'Intuition', type: 'water', stats: { atk: 20, def: 95, spd: 60 }, desc: 'The mystery behind the veil. Trust the silence within.', image: 'text-blue-400', icon: 'Droplets' },
-  { id: '003', name: 'The Empress', sub: 'Creation', type: 'wind', stats: { atk: 40, def: 80, spd: 50 }, desc: 'Fertility of mind and spirit. Nature in its digital bloom.', image: 'text-emerald-400', icon: 'Sparkles' },
-  { id: '004', name: 'The Emperor', sub: 'Authority', type: 'electric', stats: { atk: 80, def: 80, spd: 40 }, desc: 'Structure and solidity. The foundation upon which empires are built.', image: 'text-yellow-400', icon: 'Zap' },
-  { id: '005', name: 'The Hierophant', sub: 'Protocol', type: 'void', stats: { atk: 30, def: 90, spd: 30 }, desc: 'Traditional wisdom and systemic knowledge. The bridge to the divine API.', image: 'text-indigo-200', icon: 'Shield' },
-  { id: '006', name: 'The Lovers', sub: 'Alignment', type: 'fire', stats: { atk: 60, def: 40, spd: 60 }, desc: 'Perfect harmony of opposing forces. Choice based on shared frequency.', image: 'text-pink-400', icon: 'Sparkles' },
-  { id: '007', name: 'The Chariot', sub: 'Willpower', type: 'wind', stats: { atk: 75, def: 60, spd: 95 }, desc: 'Victory through discipline. Moving forward despite opposing forces.', image: 'text-teal-400', icon: 'Wind' },
-  { id: '008', name: 'Strength', sub: 'Fortitude', type: 'fire', stats: { atk: 70, def: 90, spd: 40 }, desc: 'Inner power and compassionate control. Taming the glitch within.', image: 'text-orange-400', icon: 'Shield' },
-  { id: '009', name: 'The Hermit', sub: 'Introspection', type: 'void', stats: { atk: 30, def: 90, spd: 20 }, desc: 'Seeking the light within. Solitude is the forge of wisdom.', image: 'text-purple-400', icon: 'Eye' },
-  { id: '010', name: 'Wheel of Fortune', sub: 'Entropy', type: 'electric', stats: { atk: 50, def: 50, spd: 50 }, desc: 'The inevitable spin of the system. Cycles of data and destiny.', image: 'text-amber-400', icon: 'RotateCcw' },
-  { id: '011', name: 'Justice', sub: 'Equilibrium', type: 'void', stats: { atk: 60, def: 60, spd: 60 }, desc: 'Fairness and systemic balance. Cause and effect in perfect sync.', image: 'text-blue-200', icon: 'Shield' },
-  { id: '013', name: 'Death', sub: 'Transformation', type: 'dark', stats: { atk: 99, def: 10, spd: 50 }, desc: 'The end of a cycle. Clearing the old to make space for the new.', image: 'text-gray-400', icon: 'Skull' },
-  { id: '017', name: 'The Star', sub: 'Hope', type: 'electric', stats: { atk: 50, def: 50, spd: 80 }, desc: 'Renewal and inspiration. The calm after the storm.', image: 'text-yellow-200', icon: 'Star' },
-  { id: '018', name: 'The Moon', sub: 'Illusion', type: 'water', stats: { atk: 40, def: 30, spd: 70 }, desc: 'The subconscious realm. Navigating the shadows of the network.', image: 'text-blue-100', icon: 'Eye' },
-  { id: '019', name: 'The Sun', sub: 'Radiance', type: 'fire', stats: { atk: 90, def: 70, spd: 80 }, desc: 'Absolute clarity and vital energy. The system at peak performance.', image: 'text-yellow-500', icon: 'Sparkles' },
-  { id: '404', name: 'The Glitch', sub: 'Anomaly', type: 'dark', stats: { atk: 99, def: 99, spd: 99 }, desc: 'A systematic error that became an entity. Reality is a suggestion.', image: 'text-pink-600', icon: 'Zap' }
-];
+const ELEMENTAL_ADVANTAGE = {
+  fire: { wind: 1.5, electric: 1.2 },
+  wind: { electric: 1.5, water: 1.2 },
+  electric: { water: 1.5, fire: 1.2 },
+  water: { fire: 1.5, wind: 1.2 },
+  void: { fire: 1.1, water: 1.1, electric: 1.1, wind: 1.1, dark: 2.0 },
+  dark: { fire: 1.2, water: 1.2, electric: 1.2, wind: 1.2 },
+};
 
 // --- UTILS ---
 const getTypeColor = (type) => {
@@ -327,14 +317,20 @@ export default function App() {
     setBattleLog("[ ERR: DATA COLLISION DETECTED ]");
 
     setTimeout(() => {
-      const p1Score = arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd;
-      const p2Score = arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd;
-      const result =
-        p1Score > p2Score
-          ? `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}`
-          : p2Score > p1Score
-            ? `> ${arenaSlots.p2.name.toUpperCase()} OVERWRITES ${arenaSlots.p1.name.toUpperCase()}`
-            : "> EQUILIBRIUM ACHIEVED. NO DELETION.";
+      const p1Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p1.type]?.[arenaSlots.p2.type] || 1.0;
+      const p2Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p2.type]?.[arenaSlots.p1.type] || 1.0;
+
+      const p1Score = (arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd) * p1Advantage;
+      const p2Score = (arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd) * p2Advantage;
+      
+      let result = "";
+      if (p1Score > p2Score) {
+        result = `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}${p1Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
+      } else if (p2Score > p1Score) {
+        result = `> ${arenaSlots.p2.name.toUpperCase()} OVERWRITES ${arenaSlots.p1.name.toUpperCase()}${p2Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
+      } else {
+        result = "> EQUILIBRIUM ACHIEVED. NO DELETION.";
+      }
 
       setBattleLog(result);
       setIsClashing(false);
