@@ -1,7 +1,7 @@
 mcp_server:
   host: 0.0.0.0
   port: 443
-  workspace: GLITCHHUB_TAROT
+  workspace: GLITCHWORKS_TAROT
   labs_integration:
     enabled: true
     api_url: https://labs.perplexity.ai/api/v1/
@@ -14,5 +14,4 @@ mcp_server:
     min_chunk_size: 512
   logging:
     level: info
-    file: "/var/log/glitchhub_tarot_mcp.log"
-
+    file: "/var/log/glitchworks_tarot_mcp.log"

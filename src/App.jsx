@@ -1,261 +1,28 @@
 import { useState, useEffect } from 'react';
 import INITIAL_DECK from './dynamic_deck.json';
 import {
-  Sword, Shield, Zap, Flame, Droplets, Wind,
-  Sparkles, Skull, Eye, RotateCcw, Layers,
-  LayoutGrid, X, Shuffle, Star, Hammer, Save, Settings, Upload, EyeOff
+  Sword, Eye, Layers, LayoutGrid, X, Shuffle, Hammer, Save, Settings, Upload, EyeOff, Sparkles
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-/**
- * AETHER DECK - Modular TCG/Tarot System (v2.1 Glitchworks Edition)
- * Base App Component for glitchworks-tarot repo
- * 
- * data-testid convention: `aether-<area>-<element>` — see docs/TESTIDS.md
- */
+import { GlitchStyles } from './components/GlitchStyles.jsx';
+import { NeonSlider } from './components/NeonSlider.jsx';
+import { Card } from './components/Card.jsx';
+import { usePersistedDeck } from './hooks/usePersistedDeck.js';
+import { resolveBattle } from './domain/battle.js';
+import { drawSpread } from './domain/deckState.js';
+import { createLocalStorageDeckStorage } from './adapters/localStorageDeckStorage.js';
+import { createConsoleTelemetry } from './adapters/consoleTelemetry.js';
 
-// --- GLOBAL GLITCH STYLES ---
-const GlitchStyles = () => (
-  <style>{`
-    :root {
-      --glitch-int: 0.5;
-      --crt-opacity: 0.3;
-      --noise-opacity: 0.15;
-      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-    }
+// Default instances for cases where they are not injected (e.g., tests or standard rendering)
+const defaultStorage = createLocalStorageDeckStorage();
+const defaultTelemetry = createConsoleTelemetry();
 
-    .crt-overlay {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      background-size: 100% 4px, 6px 100%;
-      z-index: 9999;
-      opacity: var(--crt-opacity);
-      mix-blend-mode: overlay;
-    }
-
-    .noise-overlay {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-      opacity: var(--noise-opacity);
-      z-index: 0;
-      mix-blend-mode: multiply;
-    }
-
-    @keyframes rgb-split {
-      0% { text-shadow: calc(var(--glitch-int) * -4px) 0 red, calc(var(--glitch-int) * 4px) 0 cyan; }
-      25% { text-shadow: calc(var(--glitch-int) * 4px) 0 red, calc(var(--glitch-int) * -4px) 0 cyan; }
-      50% { text-shadow: calc(var(--glitch-int) * -2px) 0 red, calc(var(--glitch-int) * 2px) 0 cyan; }
-      75% { text-shadow: calc(var(--glitch-int) * 2px) 0 red, calc(var(--glitch-int) * -2px) 0 cyan; }
-      100% { text-shadow: calc(var(--glitch-int) * -4px) 0 red, calc(var(--glitch-int) * 4px) 0 cyan; }
-    }
-
-    .glitch-hover:hover {
-      animation: rgb-split 0.2s steps(2, end) infinite;
-    }
-
-    .glitch-text {
-      text-shadow: calc(var(--glitch-int) * 2px) 0px 0px rgba(255,0,0,0.5), 
-                   calc(var(--glitch-int) * -2px) 0px 0px rgba(0,255,255,0.5);
-    }
-
-    @keyframes data-collision {
-      0%, 100% { transform: translate3d(0, 0, 0); filter: none; }
-      10%, 90% { transform: translate3d(-4px, 0, 0) skewX(-2deg); }
-      20%, 80% { transform: translate3d(8px, 0, 0) skewX(2deg); filter: hue-rotate(90deg) contrast(150%); }
-      30%, 50%, 70% { transform: translate3d(-12px, 2px, 0) skewX(-4deg); }
-      40%, 60% { transform: translate3d(12px, -2px, 0) skewX(4deg); filter: invert(1) drop-shadow(0 0 20px red); }
-    }
-
-    .animate-collision {
-      animation: data-collision 0.6s cubic-bezier(.36,.07,.19,.97) both;
-    }
-
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  `}</style>
-);
-// --- DATA MOCKUP ---
-const ELEMENTAL_ADVANTAGE = {
-  fire: { wind: 1.5, electric: 1.2 },
-  wind: { electric: 1.5, water: 1.2 },
-  electric: { water: 1.5, fire: 1.2 },
-  water: { fire: 1.5, wind: 1.2 },
-  void: { fire: 1.1, water: 1.1, electric: 1.1, wind: 1.1, dark: 2.0 },
-  dark: { fire: 1.2, water: 1.2, electric: 1.2, wind: 1.2 },
-};
-
-// --- UTILS ---
-const getTypeColor = (type) => {
-  const map = {
-    fire: 'from-red-900/50 to-orange-900/50 border-red-500/30',
-    water: 'from-blue-900/50 to-cyan-900/50 border-blue-500/30',
-    electric: 'from-yellow-900/50 to-amber-900/50 border-yellow-500/30',
-    wind: 'from-emerald-900/50 to-teal-900/50 border-emerald-500/30',
-    void: 'from-indigo-900/50 to-purple-900/50 border-indigo-500/30',
-    dark: 'from-gray-900/50 to-slate-900/50 border-gray-500/30',
-  };
-  return map[type] || 'from-gray-800 to-gray-900 border-gray-700';
-};
-
-const iconMap = {
-  Sparkles: <Sparkles size={64} />, Flame: <Flame size={64} />, Droplets: <Droplets size={64} />,
-  Zap: <Zap size={64} />, Skull: <Skull size={64} />, Wind: <Wind size={64} />,
-  Eye: <Eye size={64} />, Star: <Star size={64} />, Sword: <Sword size={64} />,
-  Shield: <Shield size={64} />, Hammer: <Hammer size={64} />,
-};
-
-// --- CUSTOM UI COMPONENTS ---
-
-const NeonSlider = ({ value, onChange, label, color = "indigo" }) => {
-  const blocks = 10;
-  const activeColor = {
-    indigo: 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]',
-    emerald: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
-    red: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-  }[color];
-
-  return (
-    <div className="flex flex-col gap-1 w-full">
-      <div className="flex justify-between text-xs font-mono text-white/50">
-        <span>{label}</span>
-        <span className={`text-${color}-400 glitch-text`}>{value}</span>
-      </div>
-      <div className="flex gap-[2px] h-4 w-full cursor-pointer" 
-           onPointerDown={(e) => {
-             const rect = e.currentTarget.getBoundingClientRect();
-             const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-             onChange(Math.ceil(pct * 100));
-           }}
-      >
-        {[...Array(blocks)].map((_, i) => (
-          <div
-            key={i}
-            className={`flex-1 rounded-[1px] transition-all duration-75 ${
-              value >= (i + 1) * (100 / blocks) ? activeColor : 'bg-slate-800'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, clashing = false }) => {
-  const sizeClasses = {
-    sm: 'w-24 h-40 text-xs',
-    md: 'w-64 h-[28rem]',
-    lg: 'w-80 h-[36rem]',
-  };
-
-  const IconComponent = iconMap[data.icon] || <Sparkles size={64} />;
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`relative preserve-3d transition-transform duration-500 cursor-pointer group ${sizeClasses[size]} ${isFlipped ? 'rotate-y-180' : ''} ${clashing ? 'animate-collision' : ''}`}
-      style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
-    >
-      {/* CARD BACK */}
-      <div className="absolute inset-0 backface-hidden w-full h-full rounded-xl bg-slate-900 border-2 border-slate-700 flex items-center justify-center overflow-hidden shadow-xl hover:border-indigo-500 transition-colors">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-slate-900 to-slate-900"></div>
-        <div className="grid grid-cols-6 grid-rows-6 gap-1 opacity-10 rotate-45 scale-150">
-           {[...Array(36)].map((_, i) => <div key={i} className="w-full h-full border border-indigo-500 group-hover:border-red-500 transition-colors duration-1000"></div>)}
-        </div>
-        <RotateCcw className="text-indigo-500 animate-pulse glitch-hover" size={32} />
-      </div>
-
-      {/* CARD FRONT */}
-      <div className={`absolute inset-0 backface-hidden rotate-y-180 w-full h-full rounded-xl bg-gradient-to-br ${getTypeColor(data.type)} border-2 backdrop-blur-md flex flex-col shadow-2xl overflow-hidden`}>
-        
-        {/* Tarot Inner Frame */}
-        <div className="absolute inset-2 border border-white/10 rounded-lg pointer-events-none z-20"></div>
-
-        {/* Top Header - Minimal */}
-        <div className="p-4 flex justify-between items-start z-30">
-          <div className="text-[10px] font-mono tracking-widest text-white/50 uppercase">{data.type}</div>
-          <div className="text-sm font-serif text-white/80 tracking-widest">{data.id}</div>
-        </div>
-
-        {/* Expansive Art Center */}
-        <div className={`absolute inset-0 flex items-center justify-center ${data.image}`}>
-          {data.customImage && (
-            <img src={data.customImage} alt={data.name} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" />
-          )}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.8)_100%)]"></div>
-          {!data.customImage && (
-            <div className="relative z-10 scale-125 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] glitch-hover transition-transform duration-700 group-hover:scale-[1.4]">
-              {IconComponent}
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Data Container */}
-        <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/90 to-transparent pt-16 z-30">
-          <div className="px-4 text-center">
-            <h3 className="font-serif text-2xl text-white tracking-widest glitch-hover uppercase">{data.name}</h3>
-            <p className="text-[9px] text-white/50 uppercase tracking-[0.2em] mt-1">{data.sub}</p>
-          </div>
-
-          {!data.hideDesc && (
-            <div className="px-5 py-3 text-center">
-              <p className="text-[11px] italic text-white/60 leading-relaxed font-serif line-clamp-3">
-                &ldquo;{data.desc}&rdquo;
-              </p>
-            </div>
-          )}
-
-          {showStats && !data.hideStats && (
-            <div className="mt-auto grid grid-cols-3 border-t border-white/10 bg-black/60 backdrop-blur-md divide-x divide-white/10">
-              <div className="p-2 flex flex-col items-center group/stat">
-                <Sword size={12} className="text-red-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.atk}</span>
-              </div>
-              <div className="p-2 flex flex-col items-center group/stat">
-                <Shield size={12} className="text-blue-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.def}</span>
-              </div>
-              <div className="p-2 flex flex-col items-center group/stat">
-                <Wind size={12} className="text-emerald-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.spd}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- MAIN APP COMPONENT ---
-
-export default function App() {
+export default function App({ storage = defaultStorage, telemetry = defaultTelemetry }) {
   const [view, setView] = useState('dex'); // 'dex', 'arena', 'oracle', 'forge'
-  const [deck, setDeck] = useState(() => {
-    try {
-      const saved = localStorage.getItem('aether-deck');
-      if (saved) return JSON.parse(saved);
-    } catch {
-      localStorage.removeItem('aether-deck');
-    }
-    return INITIAL_DECK;
-  });
+  const { deck, compileForgeCard } = usePersistedDeck(storage, telemetry, INITIAL_DECK);
   const [selectedCard, setSelectedCard] = useState(null);
-  
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('aether-deck', JSON.stringify(deck));
-  }, [deck]);
 
   // Settings / Aesthetics State
   const [showSettings, setShowSettings] = useState(false);
@@ -315,29 +82,15 @@ export default function App() {
     }
   };
 
-  const resolveBattle = () => {
+  const handleResolveBattle = () => {
     if (!arenaSlots.p1 || !arenaSlots.p2 || isClashing) return;
     
     setIsClashing(true);
     setBattleLog("[ ERR: DATA COLLISION DETECTED ]");
 
     setTimeout(() => {
-      const p1Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p1.type]?.[arenaSlots.p2.type] || 1.0;
-      const p2Advantage = ELEMENTAL_ADVANTAGE[arenaSlots.p2.type]?.[arenaSlots.p1.type] || 1.0;
-
-      const p1Score = (arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd) * p1Advantage;
-      const p2Score = (arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd) * p2Advantage;
-      
-      let result;
-      if (p1Score > p2Score) {
-        result = `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}${p1Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
-      } else if (p2Score > p1Score) {
-        result = `> ${arenaSlots.p2.name.toUpperCase()} OVERWRITES ${arenaSlots.p1.name.toUpperCase()}${p2Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
-      } else {
-        result = "> EQUILIBRIUM ACHIEVED. NO DELETION.";
-      }
-
-      setBattleLog(result);
+      const result = resolveBattle(arenaSlots.p1, arenaSlots.p2);
+      setBattleLog(result.logLine);
       setIsClashing(false);
     }, 600);
   };
@@ -348,9 +101,8 @@ export default function App() {
     setBattleLog("[ ARENA WIPED ]");
   };
 
-  const drawSpread = () => {
-    const shuffled = [...deck].sort(() => 0.5 - Math.random());
-    setSpread(shuffled.slice(0, 3));
+  const handleDrawSpread = () => {
+    setSpread(drawSpread(deck));
   };
 
   const handleImageUpload = (e) => {
@@ -365,12 +117,7 @@ export default function App() {
   };
 
   const saveForgeCard = () => {
-    const maxId = deck.reduce((max, c) => {
-      const n = parseInt(c.id, 10);
-      return !isNaN(n) && n > max ? n : max;
-    }, 0);
-    const newCard = { ...forgeData, id: String(maxId + 1).padStart(3, '0') };
-    setDeck([...deck, newCard]);
+    compileForgeCard(forgeData);
     setView('dex');
     setForgeData({ ...forgeData, name: 'Next Entity' });
   };
@@ -409,7 +156,7 @@ export default function App() {
           <button 
             type="button"
             data-testid="aether-arena-clash"
-            onClick={resolveBattle} 
+            onClick={handleResolveBattle} 
             disabled={!arenaSlots.p1 || !arenaSlots.p2 || isClashing}
             className={`w-full md:w-auto px-8 py-3 rounded-none border border-transparent font-bold tracking-widest transition-all ${
               isClashing ? 'bg-white text-black animate-pulse' : 
@@ -477,7 +224,7 @@ export default function App() {
         )}
       </div>
 
-      <button type="button" data-testid="aether-oracle-draw" onClick={drawSpread} className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group">
+      <button type="button" data-testid="aether-oracle-draw" onClick={handleDrawSpread} className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group">
         <Shuffle size={16} className="group-hover:animate-spin" />
         {spread.length > 0 ? 'RECALCULATE' : 'INITIALIZE SEQUENCE'}
       </button>
@@ -524,7 +271,7 @@ export default function App() {
           <div>
             <label className="block text-[10px] font-mono text-emerald-500/70 mb-2 uppercase tracking-widest">Visual Sigil</label>
             <select value={forgeData.icon} onChange={e => setForgeData({...forgeData, icon: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded px-3 py-3 text-white font-mono text-xs focus:outline-none focus:border-emerald-500 appearance-none">
-              {Object.keys(iconMap).map(k => <option key={k} value={k}>{k.toUpperCase()}</option>)}
+              {['Sparkles', 'Flame', 'Droplets', 'Zap', 'Skull', 'Wind', 'Eye', 'Star', 'Sword', 'Shield', 'Hammer'].map(k => <option key={k} value={k}>{k.toUpperCase()}</option>)}
             </select>
           </div>
         </div>

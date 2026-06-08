@@ -2,9 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+import { createLocalStorageDeckStorage } from './adapters/localStorageDeckStorage.js';
+import { createConsoleTelemetry } from './adapters/consoleTelemetry.js';
+
+const storage = createLocalStorageDeckStorage();
+const telemetry = createConsoleTelemetry();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <App storage={storage} telemetry={telemetry} />
   </React.StrictMode>
 );
