@@ -26,8 +26,9 @@ npm run test:e2e:ui   # Playwright UI mode
 ## Where tests live
 
 - `src/App.test.jsx` — RTL tests
+- `src/test/fixtures/AetherTestFixtures.js` — constructor fixtures for domain/hook specs
 - `src/setupTests.js` — `jest-dom` for Vitest
-- `e2e/*.spec.ts` — Playwright specs
+- `e2e/*.spec.ts` — Playwright specs (`app.spec.ts`, `arena-security.spec.ts`)
 - `vitest.config.js` — `setupFiles`, coverage globs
 
 ## Agent / progress log

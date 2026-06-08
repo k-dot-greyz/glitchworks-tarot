@@ -1,22 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   baseScoreComponent,
   elementalComponent,
   resolveBattleWithEngine
 } from './battleEngine.js';
+import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('battleEngine', () => {
-  const p1 = {
-    name: 'Alpha',
-    type: 'fire',
-    stats: { atk: 50, def: 30, spd: 20 },
-  };
+  let fixtures;
+  let p1;
+  let p2;
 
-  const p2 = {
-    name: 'Omega',
-    type: 'wind',
-    stats: { atk: 40, def: 40, spd: 30 },
-  };
+  beforeEach(() => {
+    fixtures = new AetherTestFixtures();
+    p1 = { ...fixtures.combatants.alpha };
+    p2 = { ...fixtures.combatants.omega };
+  });
 
   describe('baseScoreComponent', () => {
     it('calculates score as ATK + SPD', () => {
@@ -119,6 +118,66 @@ describe('battleEngine', () => {
         expect(result.p1Score).toBe(70);
         expect(result.p2Score).toBe(70);
         expect(result.winner).toBeNull(); // Draw due to equal scores
+      });
+    });
+
+    describe('ruleset integration and hostile inputs', () => {
+      it('applies mtg ruleset scoring (ATK + DEF) with elemental multiplier', () => {
+        // p1 base: 50 + 30 = 80, p2 base: 40 + 40 = 80
+        // fire vs wind: 1.5x / 1.0x → 120 vs 80
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.mtg,
+        );
+        expect(result.winner).toBe('p1');
+        expect(result.p1Score).toBe(120);
+        expect(result.p2Score).toBe(80);
+      });
+
+      it('applies yugioh ruleset scoring (ATK * 2)', () => {
+        // p1 base: 100, p2 base: 80 → with elemental: 150 vs 80
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.yugioh,
+        );
+        expect(result.winner).toBe('p1');
+        expect(result.p1Score).toBe(150);
+        expect(result.p2Score).toBe(80);
+      });
+
+      it('falls back safely when mode or ruleset id is injected/unknown', () => {
+        const baseline = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.standard,
+        );
+        const injected = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.unknown,
+          fixtures.rulesetIds.unknown,
+        );
+        expect(injected).toEqual(baseline);
+      });
+
+      it('does not throw when combatant stats contain non-finite numbers', () => {
+        const broken = {
+          ...p1,
+          stats: { atk: Number.NaN, def: 10, spd: 10 },
+        };
+        expect(() =>
+          resolveBattleWithEngine(
+            broken,
+            p2,
+            fixtures.arenaModes.standard,
+            fixtures.rulesetIds.standard,
+          ),
+        ).not.toThrow();
       });
     });
   });
