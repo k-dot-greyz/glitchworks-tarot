@@ -323,7 +323,7 @@ export default function App() {
       const p1Score = (arenaSlots.p1.stats.atk + arenaSlots.p1.stats.spd) * p1Advantage;
       const p2Score = (arenaSlots.p2.stats.atk + arenaSlots.p2.stats.spd) * p2Advantage;
       
-      let result = "";
+      let result;
       if (p1Score > p2Score) {
         result = `> ${arenaSlots.p1.name.toUpperCase()} OVERWRITES ${arenaSlots.p2.name.toUpperCase()}${p1Advantage > 1.0 ? " (TYPE_ADVANTAGE)" : ""}`;
       } else if (p2Score > p1Score) {

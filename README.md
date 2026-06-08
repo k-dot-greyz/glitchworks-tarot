@@ -1,8 +1,6 @@
-# glitchhub-tarot (Glitchworks — Aether Deck)
+# glitchworks-tarot (Glitchworks — Aether Deck)
 
 Dark-mode **cyber-mystic** card UI: **Dex** (library), **Arena** (clash), **Oracle** (spread), **Forge** (entity builder). React 18 + Vite + Tailwind + lucide-react.
-
-> **Naming:** GitHub repo may appear as **glitchhub-tarot** or **glitchworks-tarot** — same app; check `git remote -v`.
 
 ## Quick start (launch)
 
@@ -49,7 +47,7 @@ GitHub Actions: **lint** → **Vitest + coverage** → **build** → **Playwrigh
 
 ## zenOS / dev-master
 
-When embedded in **dev-master**, this repo lives at `dex/09-repos/glitchhub-tarot`. Cross-repo scratchpad: root `AGENT_RAM.ipynb`; app-specific notes: `docs/AETHER_RAM.ipynb`.
+When embedded in **dev-master**, this repo lives at `dex/09-repos/glitchworks-tarot`. Cross-repo scratchpad: root `AGENT_RAM.ipynb`; app-specific notes: `docs/AETHER_RAM.ipynb`.
 
 ---
 
