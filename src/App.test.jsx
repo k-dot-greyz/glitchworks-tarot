@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import App from './App.jsx';
@@ -165,5 +165,83 @@ describe('App', () => {
       'DECK_SAVE_QUOTA_EXCEEDED',
       expect.objectContaining({ error: expect.stringContaining('QuotaExceededError') })
     );
+  });
+
+  it('saveForgeCard: customImage is cleared after compile so it does not bleed into next forge session', async () => {
+    const user = userEvent.setup();
+
+    let capturedOnloadend = null;
+    const fakeResult = 'data:image/png;base64,PERSISTENCETEST';
+    vi.stubGlobal('FileReader', class {
+      constructor() { this.result = fakeResult; }
+      set onloadend(fn) { capturedOnloadend = fn; }
+      readAsDataURL() {}
+    });
+
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Upload custom artwork and flush the resulting state update
+    const fileInput = document.querySelector('input[type="file"]');
+    const fakeFile = new File(['data'], 'art.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } });
+    await act(async () => { capturedOnloadend(); });
+
+    // "Remove Artwork" button is visible — customImage is set
+    expect(screen.getByText(/Remove Artwork/i)).toBeInTheDocument();
+
+    // Compile the card — navigates to dex
+    await user.click(screen.getByTestId('aether-forge-compile'));
+
+    // Return to forge
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // customImage must be cleared — "Remove Artwork" must not appear for the new session
+    expect(screen.queryByText(/Remove Artwork/i)).not.toBeInTheDocument();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('saveForgeCard: hideStats and hideDesc are reset to false after compile', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Toggle both presentation overrides ON
+    await user.click(screen.getByText(/LORE VISIBLE/i));
+    await user.click(screen.getByText(/STATS VISIBLE/i));
+
+    expect(screen.getByText(/LORE HIDDEN/i)).toBeInTheDocument();
+    expect(screen.getByText(/STATS HIDDEN/i)).toBeInTheDocument();
+
+    // Compile and return to forge
+    await user.click(screen.getByTestId('aether-forge-compile'));
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Both overrides must be back to their default visible state
+    expect(screen.getByText(/LORE VISIBLE/i)).toBeInTheDocument();
+    expect(screen.getByText(/STATS VISIBLE/i)).toBeInTheDocument();
+  });
+
+  it('compileForgeCard: rapid double-click produces cards with unique IDs (no stale closure)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    const compileButton = screen.getByTestId('aether-forge-compile');
+
+    // Fire two synchronous click events before React has a chance to flush state
+    // from the first click. This simulates the double-click race condition.
+    fireEvent.click(compileButton);
+    fireEvent.click(compileButton);
+
+    // Wait for all pending state flushes
+    await new Promise(r => setTimeout(r, 50));
+
+    const saved = localStorage.getItem('aether-deck');
+    const savedDeck = JSON.parse(saved);
+    const ids = savedDeck.map(c => c.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
   });
 });

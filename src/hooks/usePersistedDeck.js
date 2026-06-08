@@ -25,9 +25,13 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
   }, [deck, storage, telemetry]);
 
   const compileForgeCard = (forgeData) => {
-    const newCard = forgeCard(deck, forgeData);
-    setDeck(prevDeck => [...prevDeck, newCard]);
-    return newCard;
+    // Compute the new card's ID inside the functional updater so that rapid back-to-back
+    // calls (e.g. double-click) each see the latest deck rather than a stale closure
+    // snapshot, preventing duplicate IDs from being generated.
+    setDeck(prevDeck => {
+      const newCard = forgeCard(prevDeck, forgeData);
+      return [...prevDeck, newCard];
+    });
   };
 
   return {
