@@ -242,8 +242,13 @@ const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, clashin
 export default function App() {
   const [view, setView] = useState('dex'); // 'dex', 'arena', 'oracle', 'forge'
   const [deck, setDeck] = useState(() => {
-    const saved = localStorage.getItem('aether-deck');
-    return saved ? JSON.parse(saved) : INITIAL_DECK;
+    try {
+      const saved = localStorage.getItem('aether-deck');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('aether-deck');
+    }
+    return INITIAL_DECK;
   });
   const [selectedCard, setSelectedCard] = useState(null);
   
@@ -360,7 +365,11 @@ export default function App() {
   };
 
   const saveForgeCard = () => {
-    const newCard = { ...forgeData, id: String(deck.length + 1).padStart(3, '0') };
+    const maxId = deck.reduce((max, c) => {
+      const n = parseInt(c.id, 10);
+      return !isNaN(n) && n > max ? n : max;
+    }, 0);
+    const newCard = { ...forgeData, id: String(maxId + 1).padStart(3, '0') };
     setDeck([...deck, newCard]);
     setView('dex');
     setForgeData({ ...forgeData, name: 'Next Entity' });
