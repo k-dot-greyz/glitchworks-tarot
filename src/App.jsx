@@ -110,7 +110,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForgeData({ ...forgeData, customImage: reader.result });
+        setForgeData(prev => ({ ...prev, customImage: reader.result }));
       };
       reader.readAsDataURL(file);
     }

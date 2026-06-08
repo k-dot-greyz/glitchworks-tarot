@@ -25,6 +25,10 @@ export function forgeCard(deck, forgeData) {
 
 export function drawSpread(deck, rng = Math.random) {
   if (!Array.isArray(deck) || deck.length === 0) return [];
-  const shuffled = [...deck].sort(() => 0.5 - rng());
+  const shuffled = [...deck];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   return shuffled.slice(0, 3);
 }

@@ -13,7 +13,10 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
   useEffect(() => {
     try {
       const serialized = dehydrateDeck(deck);
-      storage.save(aetherConfig.storageKey, serialized);
+      const result = storage.save(aetherConfig.storageKey, serialized);
+      if (result && !result.ok && telemetry) {
+        telemetry.log('warn', 'DECK_SAVE_QUOTA_EXCEEDED', { error: result.error });
+      }
     } catch (err) {
       if (telemetry) {
         telemetry.log('error', 'DECK_SAVE_FAILED', { error: err.message });
