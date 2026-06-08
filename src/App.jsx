@@ -275,9 +275,8 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
               <button
                 onClick={() => {
                   setEditingDeckId(activeDeckId);
-                  setEditingDeckName(
-                    decks.find((d) => d.id === activeDeckId).name,
-                  );
+                  const selectedDeck = decks.find((d) => d.id === activeDeckId);
+                  setEditingDeckName(selectedDeck ? selectedDeck.name : '');
                 }}
                 className="p-1.5 text-white/50 hover:text-white hover:bg-white/5 rounded transition-colors"
                 title="Rename Deck"
