@@ -63,7 +63,7 @@ Every feature, integration, or refactor in `glitchworks-tarot` must be designed 
 ### 2.1. Zero Hardcoding (Dynamic State Configuration)
 
 * **Rule**: No magic strings, static network ports, or fixed directory paths in domain logic.
-* **Application**: Vite dev/preview ports, Capacitor `webDir`, and external API endpoints (e.g., Last.fm stats injection) belong in config, env, or injected options — not scattered literals in components. Playwright uses `baseURL` from `playwright.config.ts`; override via env only at the test harness edge.
+* **Application**: Vite dev/preview ports, Capacitor `webDir`, and external API endpoints (e.g., optional validated custom deck JSON injection) belong in config, env, or injected options — not scattered literals in components. Playwright uses `baseURL` from `playwright.config.ts`; override via env only at the test harness edge.
 
 ### 2.2. Polymorphism by Default (Interface-Driven Contracts)
 
