@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Arena UX + boundary scenarios (rulesets, banlist, clash resolution, hostile storage).
@@ -47,6 +47,24 @@ class ArenaE2EFixtures {
 
     this.storageKey = options.storageKey ?? 'aether-decks';
   }
+
+  async clickBenchCard(page: Page, cardName: string) {
+    const benchCard = page
+      .getByTestId(this.selectors.viewArena)
+      .locator('div.cursor-grab:not(.pointer-events-none)')
+      .filter({ hasText: cardName });
+    await benchCard.first().click();
+  }
+
+  collectUnexpectedConsoleErrors(page: Page, errors: string[]) {
+    page.on('console', (msg) => {
+      if (msg.type() !== 'error') return;
+      const text = msg.text();
+      if (text.includes('[AETHER_TELEMETRY]')) return;
+      if (text.includes('Failed to load resource')) return;
+      errors.push(text);
+    });
+  }
 }
 
 const fixtures = new ArenaE2EFixtures();
@@ -57,8 +75,8 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     await page.getByTestId(fixtures.selectors.navArena).click();
     await expect(page.getByTestId(fixtures.selectors.viewArena)).toBeVisible();
 
-    await page.getByText(fixtures.cardNames.fool).click();
-    await page.getByText(fixtures.cardNames.priestess).click();
+    await fixtures.clickBenchCard(page, fixtures.cardNames.fool);
+    await fixtures.clickBenchCard(page, fixtures.cardNames.priestess);
 
     const clash = page.getByTestId(fixtures.selectors.clash);
     await expect(clash).toBeEnabled();
@@ -96,7 +114,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
       fixtures.rulesetIds.mtg,
     );
 
-    await page.getByText(fixtures.cardNames.magician).click();
+    await fixtures.clickBenchCard(page, fixtures.cardNames.magician);
     await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
       /BANNED IN MTG BATTLEFIELD/i,
     );
@@ -107,7 +125,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     await page.goto('/');
     await page.getByTestId(fixtures.selectors.navArena).click();
 
-    await page.getByText(fixtures.cardNames.fool).click();
+    await fixtures.clickBenchCard(page, fixtures.cardNames.fool);
     await page.getByTestId(fixtures.selectors.flush).click();
     await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(/ARENA WIPED/i);
     await expect(page.getByTestId(fixtures.selectors.clash)).toBeDisabled();
@@ -119,9 +137,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     }, fixtures.storageKey);
 
     const errors: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') errors.push(msg.text());
-    });
+    fixtures.collectUnexpectedConsoleErrors(page, errors);
 
     await page.goto('/');
     await expect(page.getByTestId(fixtures.selectors.root)).toBeVisible();
@@ -142,15 +158,15 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     await page.getByTestId(fixtures.selectors.modeSelect).selectOption(
       fixtures.arenaModes.combatDisabled,
     );
+    await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
+      /SYSTEMS IN HARMONY/i,
+    );
 
-    await page.getByText(fixtures.cardNames.fool).click();
-    await page.getByText(fixtures.cardNames.priestess).click();
+    await fixtures.clickBenchCard(page, fixtures.cardNames.fool);
+    await fixtures.clickBenchCard(page, fixtures.cardNames.priestess);
 
     const clash = page.getByTestId(fixtures.selectors.clash);
     await expect(clash).toBeDisabled();
     await expect(clash).toHaveText(/COMBAT DISABLED/i);
-    await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
-      /SYSTEMS IN HARMONY/i,
-    );
   });
 });

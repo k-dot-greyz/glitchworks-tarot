@@ -19,7 +19,7 @@ npm run test:e2e      # Playwright (starts preview; local config may build first
 npm run test:e2e:ui   # Playwright UI mode
 ```
 
-**Playwright:** first-time setup may need `npx playwright install chromium`.
+**Playwright:** first-time setup may need `npx playwright install chromium`. When bundled Chromium cannot be downloaded, set `PLAYWRIGHT_CHANNEL=chrome` to use a system Chrome install (see `playwright.config.ts`).
 
 **CI:** `CI=true` uses preview-only web server after `build` (see `playwright.config.ts`). GitHub Actions runs `build` → artifact → `e2e` job.
 

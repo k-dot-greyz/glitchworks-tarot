@@ -1,10 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = !!process.env.CI;
+const playwrightChannel = process.env.PLAYWRIGHT_CHANNEL;
 
 /**
  * E2E against production-like preview (build + vite preview).
  * In CI, run `npm run build` before `playwright test` — webServer only starts preview.
+ * Optional: set PLAYWRIGHT_CHANNEL=chrome when bundled Chromium is unavailable locally.
  * @see docs/TESTIDS.md for stable selectors.
  */
 export default defineConfig({
@@ -18,7 +20,13 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome'],
+      ...(playwrightChannel ? { channel: playwrightChannel } : {}),
+    },
+  }],
   webServer: {
     command: isCI
       ? 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort'
