@@ -359,6 +359,47 @@ describe('App', () => {
     expect(screen.getByText('P1 Discard Pile')).toBeInTheDocument();
   });
 
+  it('compileForgeCard: no duplicate card IDs on rapid double-click (stale-closure regression)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    const compileBtn = screen.getByTestId('aether-forge-compile');
+    // Fire two clicks back-to-back — both land before any state flush
+    await user.click(compileBtn);
+    await user.click(compileBtn);
+
+    const saved = localStorage.getItem('aether-decks');
+    const savedState = JSON.parse(saved);
+    const savedDeck = savedState.decks.find(
+      (d) => d.id === savedState.activeDeckId,
+    ).cards;
+    const ids = savedDeck.map((c) => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('saveForgeCard: cosmetic fields are fully reset after compile (stale-spread regression)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Set every cosmetic to a non-default value
+    await user.selectOptions(screen.getByTestId('aether-forge-frame'), 'neonGlow');
+    await user.selectOptions(screen.getByTestId('aether-forge-hat'), 'cyberCrown');
+    await user.selectOptions(screen.getByTestId('aether-forge-rarity'), 'ultra-rare');
+    await user.selectOptions(screen.getByTestId('aether-forge-ability'), 'overdrive');
+
+    // Compile → navigate to dex → come back to forge
+    await user.click(screen.getByTestId('aether-forge-compile'));
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // All cosmetic overrides must be back at their defaults
+    expect(screen.getByTestId('aether-forge-frame').value).toBe('standard');
+    expect(screen.getByTestId('aether-forge-hat').value).toBe('none');
+    expect(screen.getByTestId('aether-forge-rarity').value).toBe('common');
+    expect(screen.getByTestId('aether-forge-ability').value).toBe('none');
+  });
+
   it('validates banlist at the boundary in the Arena view', async () => {
     const user = userEvent.setup();
     render(<App />);

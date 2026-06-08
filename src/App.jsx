@@ -230,7 +230,17 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const saveForgeCard = () => {
     compileForgeCard(forgeData);
     setView('dex');
-    setForgeData({ ...forgeData, name: 'Next Entity' });
+    setForgeData((prev) => ({
+      ...prev,
+      name: 'Next Entity',
+      customImage: null,
+      hideStats: false,
+      hideDesc: false,
+      frame: 'standard',
+      hat: 'none',
+      rarity: 'common',
+      ability: 'none',
+    }));
   };
 
   // --- VIEWS ---
