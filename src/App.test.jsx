@@ -78,13 +78,16 @@ describe('App', () => {
   });
 
   it('renders successfully when localStorage contains corrupted JSON', () => {
-    localStorage.setItem('aether-deck', '{"broken json that will never parse][');
+    localStorage.setItem(
+      'aether-decks',
+      '{"broken json that will never parse][',
+    );
     render(<App />);
     expect(screen.getByTestId('aether-root')).toBeInTheDocument();
     expect(screen.getByTestId('aether-view-dex')).toBeInTheDocument();
     // The corrupted value must be gone — either removed (null) or replaced with valid JSON by
     // the persistence effect. Either way, the stored string must not be the corrupted payload.
-    const stored = localStorage.getItem('aether-deck');
+    const stored = localStorage.getItem('aether-decks');
     if (stored !== null) {
       expect(() => JSON.parse(stored)).not.toThrow();
     }
@@ -96,8 +99,11 @@ describe('App', () => {
     await user.click(screen.getByTestId('aether-nav-forge'));
     await user.click(screen.getByTestId('aether-forge-compile'));
 
-    const saved = localStorage.getItem('aether-deck');
-    const savedDeck = JSON.parse(saved);
+    const saved = localStorage.getItem('aether-decks');
+    const savedState = JSON.parse(saved);
+    const savedDeck = savedState.decks.find(
+      (d) => d.id === savedState.activeDeckId,
+    ).cards;
     const ids = savedDeck.map(c => c.id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
@@ -162,8 +168,10 @@ describe('App', () => {
     // The persistence effect fires on mount; the save should fail and be logged
     expect(telemetry.log).toHaveBeenCalledWith(
       'warn',
-      'DECK_SAVE_QUOTA_EXCEEDED',
-      expect.objectContaining({ error: expect.stringContaining('QuotaExceededError') })
+      'DECKS_SAVE_QUOTA_EXCEEDED',
+      expect.objectContaining({
+        error: expect.stringContaining('QuotaExceededError'),
+      }),
     );
   });
 
@@ -267,5 +275,105 @@ describe('App', () => {
     expect(screen.getByText('Alpha (Thesis)')).toBeInTheDocument();
     expect(screen.getByText('Omega (Antithesis)')).toBeInTheDocument();
     expect(screen.getByText('Synthesis (Outcome)')).toBeInTheDocument();
+  });
+
+  it('supports multiple deck management (create, switch, duplicate, rename, delete)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Check initial deck selector exists
+    const deckSelect = screen.getByTestId('aether-deck-select');
+    expect(deckSelect).toBeInTheDocument();
+    expect(deckSelect.value).toBe('default');
+
+    // Create a new deck
+    await user.click(screen.getByText(/NEW_DECK/i));
+    const nameInput = screen.getByPlaceholderText('DECK NAME');
+    await user.type(nameInput, 'MY CUSTOM DECK');
+    await user.click(nameInput.parentElement.querySelector('button')); // click Check button
+
+    // Check we switched to the new deck
+    expect(deckSelect.value).not.toBe('default');
+    expect(screen.getByText('MY CUSTOM DECK')).toBeInTheDocument();
+
+    // Duplicate deck
+    await user.click(screen.getByText(/CLONE_DECK/i));
+    expect(screen.getByText('MY CUSTOM DECK COPY')).toBeInTheDocument();
+
+    // Delete deck
+    await user.click(screen.getByText(/DELETE_DECK/i));
+    expect(screen.queryByText('MY CUSTOM DECK COPY')).not.toBeInTheDocument();
+  });
+
+  it('supports interactive card flipping and reveals', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Toggle card backs in Dex view
+    const cardBacksBtn = screen.getByText('CARD_BACKS');
+    await user.click(cardBacksBtn);
+    // When card backs are shown, cards are face-down (isFlipped={false})
+
+    // Go to Oracle view
+    await user.click(screen.getByTestId('aether-nav-oracle'));
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+
+    // Cards start face-down (unrevealed). "REVEAL ALL" button should be visible.
+    const revealAllBtn = screen.getByText('REVEAL ALL');
+    expect(revealAllBtn).toBeInTheDocument();
+
+    // Click "REVEAL ALL"
+    await user.click(revealAllBtn);
+    expect(screen.queryByText('REVEAL ALL')).not.toBeInTheDocument();
+  });
+
+  it('supports TCG playmat layouts (MTG, Yu-Gi-Oh, Pokémon) in the Arena view', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-arena'));
+
+    const rulesetSelect = screen.getByTestId('aether-arena-ruleset-select');
+    expect(rulesetSelect).toBeInTheDocument();
+
+    // MTG Battlefield
+    await user.selectOptions(rulesetSelect, 'mtg');
+    expect(screen.getByText('P1 Battlefield')).toBeInTheDocument();
+    expect(screen.getByText('P1 Hand')).toBeInTheDocument();
+    expect(screen.getByText('P1 Graveyard')).toBeInTheDocument();
+    expect(screen.getByText('P1 Library')).toBeInTheDocument();
+    expect(screen.getByText('P1 Commander')).toBeInTheDocument();
+
+    // Yu-Gi-Oh! Duel Field
+    await user.selectOptions(rulesetSelect, 'yugioh');
+    expect(screen.getByText('P1 Monster Zone')).toBeInTheDocument();
+    expect(screen.getByText('P1 Spell & Trap')).toBeInTheDocument();
+    expect(screen.getByText('P1 Field Spell')).toBeInTheDocument();
+    expect(screen.getByText('P1 Graveyard')).toBeInTheDocument();
+    expect(screen.getByText('Shadow Realm')).toBeInTheDocument();
+
+    // Pokémon TCG Arena
+    await user.selectOptions(rulesetSelect, 'pokemon');
+    expect(screen.getByText('P1 Active Pokémon')).toBeInTheDocument();
+    expect(screen.getByText('P1 Bench')).toBeInTheDocument();
+    expect(screen.getByText('P1 Prizes')).toBeInTheDocument();
+    expect(screen.getByText('P1 Discard Pile')).toBeInTheDocument();
+  });
+
+  it('validates banlist at the boundary in the Arena view', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-arena'));
+
+    const rulesetSelect = screen.getByTestId('aether-arena-ruleset-select');
+    await user.selectOptions(rulesetSelect, 'mtg');
+
+    // Click on 'The Magician' (ID '001') which is banned in MTG ruleset
+    const magicianCard = screen.getByText('The Magician');
+    expect(magicianCard).toBeInTheDocument();
+
+    await user.click(magicianCard);
+
+    // It should show a ban warning in the battle log
+    expect(screen.getByTestId('aether-arena-log')).toHaveTextContent('BANNED IN MTG BATTLEFIELD');
   });
 });

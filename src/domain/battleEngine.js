@@ -1,4 +1,5 @@
 import { ELEMENTAL_ADVANTAGE } from './elemental.js';
+import { rulesets } from './rulesets.js';
 
 export const baseScoreComponent = {
   id: 'baseScore',
@@ -59,7 +60,7 @@ export const arenaModes = {
   }
 };
 
-export function resolveBattleWithEngine(p1, p2, modeId = 'standard') {
+export function resolveBattleWithEngine(p1, p2, modeId = 'standard', rulesetId = 'standard') {
   if (!p1 || !p2) {
     return {
       winner: null,
@@ -72,10 +73,11 @@ export function resolveBattleWithEngine(p1, p2, modeId = 'standard') {
   }
 
   const mode = arenaModes[modeId] || arenaModes.standard;
+  const activeRuleset = rulesets[rulesetId] || rulesets.standard;
 
   // 1. Resolve Base Score with Ability modifiers
   const baseModifier = mode.modifiers.find(m => m.applyBase);
-  
+
   // Apply Overdrive ability (+10 ATK in Speed Blitz)
   const p1Stats = { ...p1.stats };
   const p2Stats = { ...p2.stats };
@@ -85,8 +87,17 @@ export function resolveBattleWithEngine(p1, p2, modeId = 'standard') {
   const p1Modified = { ...p1, stats: p1Stats };
   const p2Modified = { ...p2, stats: p2Stats };
 
-  let p1Base = baseModifier ? baseModifier.applyBase(p1Modified) : baseScoreComponent.calculate(p1Modified);
-  let p2Base = baseModifier ? baseModifier.applyBase(p2Modified) : baseScoreComponent.calculate(p2Modified);
+  // Use custom ruleset calculation if defined, otherwise fall back to standard/mode modifiers
+  let p1Base;
+  let p2Base;
+
+  if (activeRuleset && activeRuleset.id !== 'standard') {
+    p1Base = activeRuleset.calculateScore(p1Modified, p2Modified);
+    p2Base = activeRuleset.calculateScore(p2Modified, p1Modified);
+  } else {
+    p1Base = baseModifier ? baseModifier.applyBase(p1Modified) : baseScoreComponent.calculate(p1Modified);
+    p2Base = baseModifier ? baseModifier.applyBase(p2Modified) : baseScoreComponent.calculate(p2Modified);
+  }
 
   // Apply Iron Wall ability (+20 base score in Sudden Death)
   if (p1.ability === 'ironWall' && modeId === 'suddenDeath') p1Base += 20;

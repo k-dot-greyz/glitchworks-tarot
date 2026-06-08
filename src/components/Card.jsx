@@ -94,7 +94,7 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
   const activeRarity = data.rarity || 'common';
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`relative preserve-3d transition-transform duration-500 cursor-pointer group ${sizeClasses[size]} ${isFlipped ? 'rotate-y-180' : ''} ${clashing ? 'animate-collision' : ''}`}
       style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
@@ -103,8 +103,9 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
       {renderDeckBack(activeDeckBack)}
 
       {/* CARD FRONT */}
-      <div className={`absolute inset-0 backface-hidden rotate-y-180 w-full h-full rounded-xl bg-gradient-to-br ${getTypeColor(data.type)} border-2 ${rarityBorders[activeRarity]} ${frameStyles[activeFrame]} backdrop-blur-md flex flex-col shadow-2xl overflow-hidden`}>
-        
+      <div
+        className={`absolute inset-0 backface-hidden rotate-y-180 w-full h-full rounded-xl bg-gradient-to-br ${getTypeColor(data.type)} border-2 ${rarityBorders[activeRarity]} ${frameStyles[activeFrame]} backdrop-blur-md flex flex-col shadow-2xl overflow-hidden`}
+      >
         {/* Decorative Effects */}
         {activeFrame === 'glitchMatrix' && (
           <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_bottom,rgba(16,185,129,0.15)_50%,transparent_50%)] bg-[size:100%_4px] pointer-events-none z-10"></div>
@@ -127,25 +128,39 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
         )}
         {activeHat === 'retroVisor' && (
           <div className="absolute top-[42%] left-0 right-0 h-6 bg-pink-500/30 border-y border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.8)] z-20 pointer-events-none flex items-center justify-center">
-            <span className="text-[8px] font-mono text-pink-300 tracking-[0.3em] animate-pulse">SYSTEM_ACTIVE</span>
+            <span className="text-[8px] font-mono text-pink-300 tracking-[0.3em] animate-pulse">
+              SYSTEM_ACTIVE
+            </span>
           </div>
         )}
 
         {/* Top Header - Minimal */}
         <div className="p-4 flex justify-between items-start z-30">
           <div className="flex flex-col">
-            <div className="text-[10px] font-mono tracking-widest text-white/50 uppercase">{data.type}</div>
+            <div className="text-[10px] font-mono tracking-widest text-white/50 uppercase">
+              {data.type}
+            </div>
             {activeRarity !== 'common' && (
-              <div className="text-[8px] font-mono font-bold tracking-wider text-indigo-300 uppercase mt-0.5">{activeRarity}</div>
+              <div className="text-[8px] font-mono font-bold tracking-wider text-indigo-300 uppercase mt-0.5">
+                {activeRarity}
+              </div>
             )}
           </div>
-          <div className="text-sm font-serif text-white/80 tracking-widest">{data.id}</div>
+          <div className="text-sm font-serif text-white/80 tracking-widest">
+            {data.id}
+          </div>
         </div>
 
         {/* Expansive Art Center */}
-        <div className={`absolute inset-0 flex items-center justify-center ${data.image}`}>
+        <div
+          className={`absolute inset-0 flex items-center justify-center ${data.image}`}
+        >
           {data.customImage && (
-            <img src={data.customImage} alt={data.name} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" />
+            <img
+              src={data.customImage}
+              alt={data.name}
+              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80"
+            />
           )}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.8)_100%)]"></div>
           {!data.customImage && (
@@ -158,8 +173,12 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
         {/* Bottom Data Container */}
         <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/90 to-transparent pt-16 z-30">
           <div className="px-4 text-center">
-            <h3 className="font-serif text-2xl text-white tracking-widest glitch-hover uppercase">{data.name}</h3>
-            <p className="text-[9px] text-white/50 uppercase tracking-[0.2em] mt-1">{data.sub}</p>
+            <h3 className="font-serif text-2xl text-white tracking-widest glitch-hover uppercase">
+              {data.name}
+            </h3>
+            <p className="text-[9px] text-white/50 uppercase tracking-[0.2em] mt-1">
+              {data.sub}
+            </p>
           </div>
 
           {!data.hideDesc && (
@@ -173,11 +192,14 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
           {/* Active Ability display */}
           {data.ability && data.ability !== 'none' && (
             <div className="px-4 py-1 text-center bg-indigo-950/40 border-t border-white/5">
-              <span className="text-[8px] font-mono text-indigo-300 font-bold uppercase tracking-wider block">Ability: {data.ability.toUpperCase()}</span>
+              <span className="text-[8px] font-mono text-indigo-300 font-bold uppercase tracking-wider block">
+                Ability: {data.ability.toUpperCase()}
+              </span>
               <span className="text-[8px] font-mono text-white/40 block">
                 {data.ability === 'overdrive' && '+10 ATK in Speed Blitz mode'}
                 {data.ability === 'ironWall' && '+20 DEF in Sudden Death mode'}
-                {data.ability === 'voidShield' && 'Ignores elemental advantages'}
+                {data.ability === 'voidShield' &&
+                  'Ignores elemental advantages'}
               </span>
             </div>
           )}
@@ -185,16 +207,31 @@ export const Card = ({ data, isFlipped, onClick, size = 'md', showStats = true, 
           {showStats && !data.hideStats && (
             <div className="mt-auto grid grid-cols-3 border-t border-white/10 bg-black/60 backdrop-blur-md divide-x divide-white/10">
               <div className="p-2 flex flex-col items-center group/stat">
-                <Sword size={12} className="text-red-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.atk}</span>
+                <Sword
+                  size={12}
+                  className="text-red-500 mb-1 group-hover/stat:animate-pulse"
+                />
+                <span className="text-[10px] font-bold text-white font-mono">
+                  {data.stats.atk}
+                </span>
               </div>
               <div className="p-2 flex flex-col items-center group/stat">
-                <Shield size={12} className="text-blue-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.def}</span>
+                <Shield
+                  size={12}
+                  className="text-blue-500 mb-1 group-hover/stat:animate-pulse"
+                />
+                <span className="text-[10px] font-bold text-white font-mono">
+                  {data.stats.def}
+                </span>
               </div>
               <div className="p-2 flex flex-col items-center group/stat">
-                <Wind size={12} className="text-emerald-500 mb-1 group-hover/stat:animate-pulse" />
-                <span className="text-[10px] font-bold text-white font-mono">{data.stats.spd}</span>
+                <Wind
+                  size={12}
+                  className="text-emerald-500 mb-1 group-hover/stat:animate-pulse"
+                />
+                <span className="text-[10px] font-bold text-white font-mono">
+                  {data.stats.spd}
+                </span>
               </div>
             </div>
           )}
