@@ -176,9 +176,12 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
   };
 
   const compileForgeCard = (forgeData) => {
-    const newCard = forgeCard(deck, forgeData);
-    setDeck((prevDeck) => [...prevDeck, newCard]);
-    return newCard;
+    let compiled;
+    setDeck((prevDeck) => {
+      compiled = forgeCard(prevDeck, forgeData);
+      return [...prevDeck, compiled];
+    });
+    return compiled;
   };
 
   return {
