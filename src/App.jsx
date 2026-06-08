@@ -149,7 +149,21 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const saveForgeCard = () => {
     compileForgeCard(forgeData);
     setView('dex');
-    setForgeData({ ...forgeData, name: 'Next Entity' });
+    // Reset all card-specific overrides so they don't bleed into the next forge
+    // session. Stat sliders and type are intentionally preserved so forging
+    // similar cards stays fast. customImage, toggles, cosmetics, and TCG
+    // properties are card-unique and must start fresh every session.
+    setForgeData(prev => ({
+      ...prev,
+      name: 'Next Entity',
+      customImage: null,
+      hideStats: false,
+      hideDesc: false,
+      frame: 'standard',
+      hat: 'none',
+      rarity: 'common',
+      ability: 'none',
+    }));
   };
 
   // --- VIEWS ---
@@ -363,40 +377,48 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
               ))}
             </div>
           ) : oracleLayout === 'celticCross' ? (
-            <div className="flex flex-col md:grid md:grid-cols-3 gap-8 items-center justify-items-center max-w-4xl">
-              {/* Row 1: Goal */}
-              <div></div>
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '400ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Goal</span>
-                <Card data={spread[2]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
-              <div></div>
-
-              {/* Row 2: Past, Present/Obstacle, Future */}
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '600ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Past</span>
-                <Card data={spread[3]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
-              <div className="relative w-24 h-40 flex items-center justify-center animate-in fade-in duration-700">
-                <div className="absolute z-10">
-                  <Card data={spread[0]} isFlipped={true} deckBack={deckBack} size="sm" />
+            // Celtic Cross requires exactly 5 cards. Guard against a small deck
+            // so we never render Card with data={undefined} which would throw.
+            spread.length >= 5 ? (
+              <div className="flex flex-col md:grid md:grid-cols-3 gap-8 items-center justify-items-center max-w-4xl">
+                {/* Row 1: Goal */}
+                <div></div>
+                <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '400ms'}}>
+                  <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Goal</span>
+                  <Card data={spread[2]} isFlipped={true} deckBack={deckBack} size="sm" />
                 </div>
-                <div className="absolute z-20 rotate-90 opacity-90 scale-95">
-                  <Card data={spread[1]} isFlipped={true} deckBack={deckBack} size="sm" />
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '800ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Future</span>
-                <Card data={spread[4]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
+                <div></div>
 
-              {/* Row 3: Label */}
-              <div></div>
-              <div className="text-center text-[9px] font-mono text-indigo-400/60 uppercase tracking-widest animate-in fade-in duration-1000">
-                Present (Under) / Obstacle (Cross)
+                {/* Row 2: Past, Present/Obstacle, Future */}
+                <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '600ms'}}>
+                  <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Past</span>
+                  <Card data={spread[3]} isFlipped={true} deckBack={deckBack} size="sm" />
+                </div>
+                <div className="relative w-24 h-40 flex items-center justify-center animate-in fade-in duration-700">
+                  <div className="absolute z-10">
+                    <Card data={spread[0]} isFlipped={true} deckBack={deckBack} size="sm" />
+                  </div>
+                  <div className="absolute z-20 rotate-90 opacity-90 scale-95">
+                    <Card data={spread[1]} isFlipped={true} deckBack={deckBack} size="sm" />
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '800ms'}}>
+                  <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Future</span>
+                  <Card data={spread[4]} isFlipped={true} deckBack={deckBack} size="sm" />
+                </div>
+
+                {/* Row 3: Label */}
+                <div></div>
+                <div className="text-center text-[9px] font-mono text-indigo-400/60 uppercase tracking-widest animate-in fade-in duration-1000">
+                  Present (Under) / Obstacle (Cross)
+                </div>
+                <div></div>
               </div>
-              <div></div>
-            </div>
+            ) : (
+              <div className="text-center py-8 font-mono text-xs text-red-400/70 border border-red-500/20 rounded-lg px-4">
+                INSUFFICIENT DATA — CELTIC CROSS REQUIRES 5+ CARDS IN DECK
+              </div>
+            )
           ) : (
             // theClash Layout
             <div className="flex flex-col gap-8 items-center">

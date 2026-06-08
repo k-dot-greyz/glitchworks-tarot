@@ -25,9 +25,18 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
   }, [deck, storage, telemetry]);
 
   const compileForgeCard = (forgeData) => {
-    const newCard = forgeCard(deck, forgeData);
-    setDeck(prevDeck => [...prevDeck, newCard]);
-    return newCard;
+    // forgeCard must run inside the setDeck functional updater so it always
+    // sees the latest committed deck state. Computing the new ID from the
+    // closed-over `deck` snapshot means two rapid calls (e.g. double-click)
+    // both read the same stale deck and produce the same maxId, creating
+    // duplicate card IDs that get persisted to localStorage.
+    let savedCard;
+    setDeck(prevDeck => {
+      const newCard = forgeCard(prevDeck, forgeData);
+      savedCard = newCard;
+      return [...prevDeck, newCard];
+    });
+    return savedCard;
   };
 
   return {

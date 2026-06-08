@@ -268,4 +268,70 @@ describe('App', () => {
     expect(screen.getByText('Omega (Antithesis)')).toBeInTheDocument();
     expect(screen.getByText('Synthesis (Outcome)')).toBeInTheDocument();
   });
+
+  it('Celtic Cross with deck < 5 cards shows error message instead of crashing', async () => {
+    const { createMemoryDeckStorage } =
+      await import('./adapters/memoryDeckStorage.js');
+
+    // Seed storage with a 4-card deck — one fewer than Celtic Cross requires
+    const smallDeck = [
+      { id: '001', name: 'A', type: 'fire', sub: 'X', icon: 'Sword', desc: 'd', stats: { atk: 10, def: 10, spd: 10 } },
+      { id: '002', name: 'B', type: 'water', sub: 'X', icon: 'Shield', desc: 'd', stats: { atk: 10, def: 10, spd: 10 } },
+      { id: '003', name: 'C', type: 'wind', sub: 'X', icon: 'Wind', desc: 'd', stats: { atk: 10, def: 10, spd: 10 } },
+      { id: '004', name: 'D', type: 'void', sub: 'X', icon: 'Sparkles', desc: 'd', stats: { atk: 10, def: 10, spd: 10 } },
+    ];
+    const storage = createMemoryDeckStorage({
+      'aether-deck': JSON.stringify(smallDeck),
+    });
+
+    const user = userEvent.setup();
+    render(<App storage={storage} />);
+    await user.click(screen.getByTestId('aether-nav-oracle'));
+
+    const layoutSelect = screen.getByTestId('aether-oracle-layout-select');
+    await user.selectOptions(layoutSelect, 'celticCross');
+
+    // Draw — should NOT crash, should show the insufficient-cards error
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+    expect(screen.getByText(/INSUFFICIENT DATA/i)).toBeInTheDocument();
+    expect(screen.queryByText('Goal')).not.toBeInTheDocument();
+  });
+
+  it('saveForgeCard resets frame, hat, rarity, and ability to defaults after compiling', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Set non-default cosmetics and TCG properties
+    await user.selectOptions(screen.getByTestId('aether-forge-frame'), 'glitchMatrix');
+    await user.selectOptions(screen.getByTestId('aether-forge-hat'), 'cyberCrown');
+    await user.selectOptions(screen.getByTestId('aether-forge-rarity'), 'glitched');
+    await user.selectOptions(screen.getByTestId('aether-forge-ability'), 'overdrive');
+
+    // Compile and navigate back to forge
+    await user.click(screen.getByTestId('aether-forge-compile'));
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // All four fields must reset to defaults so they don't bleed into the next card
+    expect(screen.getByTestId('aether-forge-frame').value).toBe('standard');
+    expect(screen.getByTestId('aether-forge-hat').value).toBe('none');
+    expect(screen.getByTestId('aether-forge-rarity').value).toBe('common');
+    expect(screen.getByTestId('aether-forge-ability').value).toBe('none');
+  });
+
+  it('rapid double-click on forge compile produces unique IDs (no stale closure collision)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    const compileBtn = screen.getByTestId('aether-forge-compile');
+    // Fire two clicks without waiting between them to exercise the race
+    await user.dblClick(compileBtn);
+
+    const saved = localStorage.getItem('aether-deck');
+    const deck = JSON.parse(saved);
+    const ids = deck.map(c => c.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+  });
 });
