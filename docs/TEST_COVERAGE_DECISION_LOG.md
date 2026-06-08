@@ -1,7 +1,8 @@
 # Test coverage decision log — agentic security pass
 
-**Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
-**Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
+**Branch:** `greyzxc/agentic-security-test-coverage-4db2`  
+**Trigger context:** PR #25 (`feat/lastfm-decouple`) — canonical `default_deck.json`; Last.fm scrobble overlay removed from shipped data  
+**Base:** `ef13af5` (arena rulesets + deck decouple)  
 **Date:** 2026-06-08
 
 ## Attack surface reviewed
@@ -14,6 +15,7 @@
 | `setDeck` / forge compile | Invalid cards merged into active deck | `usePersistedDeck` throw on invalid schema |
 | Ruleset `calculateScore` | Wrong formula per playmat | `rulesets.test.js` + `battleEngine` integration |
 | Oracle / deck name strings | XSS via stored card text | Schema accepts strings; React escaping assumed — documented, not snapshot-tested |
+| Shipped `default_deck.json` | Last.fm / agentic lore reinjected into product bundle | `default_deck.test.js` + E2E canonical sub/desc checks |
 
 ## Prioritization (impact vs cost)
 
@@ -42,6 +44,8 @@
 | `src/domain/deckValidation.test.js` | Hostile edge payloads |
 | `src/hooks/usePersistedDeck.test.js` | **New** — storage boundary |
 | `e2e/arena-security.spec.ts` | **New** — Playwright user-story flows |
+| `src/default_deck.test.js` | **New** — canonical deck, no Last.fm overlay |
+| `e2e/app.spec.ts` | Canonical deck load user story |
 
 ## Playwright user stories (priority)
 
@@ -57,8 +61,10 @@
 npm run lint
 npm run test
 npm run build
-npm run test:e2e
+npm run test:e2e   # requires `npx playwright install chromium`; CI runs after build artifact
 ```
+
+**Local agent note (2026-06-08):** E2E could not be executed in the cloud agent VM — Playwright Chromium download failed (`ECONNRESET`). Unit suite (73 tests) and production build passed locally; E2E deferred to CI.
 
 ## Fixture convention
 

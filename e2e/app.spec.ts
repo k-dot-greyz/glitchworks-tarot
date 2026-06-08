@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Aether deck — core flows', () => {
+  test('loads canonical default deck without Last.fm scrobble overlay', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('aether-root')).toBeVisible();
+    await expect(page.getByText('Infinite Potential')).toBeVisible();
+    await expect(page.getByText(/scrobble/i)).toHaveCount(0);
+    await expect(page.getByText(/^Sync:/i)).toHaveCount(0);
+  });
+
   test('loads shell and dex view', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (msg) => {
