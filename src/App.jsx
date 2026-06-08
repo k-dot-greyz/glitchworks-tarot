@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react';
 import INITIAL_DECK from './dynamic_deck.json';
 import {
-  Sword, Eye, Layers, LayoutGrid, X, Shuffle, Hammer, Save, Settings, Upload, EyeOff, Sparkles
+  Sword,
+  Eye,
+  Layers,
+  LayoutGrid,
+  X,
+  Shuffle,
+  Hammer,
+  Save,
+  Settings,
+  Upload,
+  EyeOff,
+  Sparkles,
+  Plus,
+  Trash2,
+  Copy,
+  Edit3,
+  Check,
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -11,6 +27,7 @@ import { NeonSlider } from './components/NeonSlider.jsx';
 import { Card } from './components/Card.jsx';
 import { usePersistedDeck } from './hooks/usePersistedDeck.js';
 import { resolveBattleWithEngine, arenaModes } from './domain/battleEngine.js';
+import { rulesets } from './domain/rulesets.js';
 import { drawSpread } from './domain/deckState.js';
 import { createLocalStorageDeckStorage } from './adapters/localStorageDeckStorage.js';
 import { createConsoleTelemetry } from './adapters/consoleTelemetry.js';
@@ -21,19 +38,46 @@ const defaultTelemetry = createConsoleTelemetry();
 
 export default function App({ storage = defaultStorage, telemetry = defaultTelemetry }) {
   const [view, setView] = useState('dex'); // 'dex', 'arena', 'oracle', 'forge'
-  const { deck, compileForgeCard } = usePersistedDeck(storage, telemetry, INITIAL_DECK);
+  const {
+    decks,
+    activeDeckId,
+    deck,
+    deckBack,
+    setDeckBack,
+    switchDeck,
+    createDeck,
+    duplicateDeck,
+    renameDeck,
+    deleteDeck,
+    compileForgeCard,
+  } = usePersistedDeck(storage, telemetry, INITIAL_DECK);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [modalCardFlipped, setModalCardFlipped] = useState(true); // true = face-up, false = face-down
 
   // Settings / Aesthetics State
   const [showSettings, setShowSettings] = useState(false);
-  const [deckBack, setDeckBack] = useState('standard');
   const [aesthetics, setAesthetics] = useState({
     glitch: 50,
     crt: 40,
-    noise: 15
+    noise: 15,
   });
 
+  // Dex View States
+  const [showDeckBacks, setShowDeckBacks] = useState(false);
+  const [editingDeckId, setEditingDeckId] = useState(null);
+  const [editingDeckName, setEditingDeckName] = useState('');
+  const [newDeckName, setNewDeckName] = useState('');
+  const [showCreateDeckInput, setShowCreateDeckInput] = useState(false);
+
+  // Drag and Drop States
+  const [dragOverSlot, setDragOverSlot] = useState(null); // zone ID or null
+  const [oracleDragOverZone, setOracleDragOverZone] = useState(null); // zone index or null
+
+  // Oracle Reveals State
+  const [revealedCardIds, setRevealedCardIds] = useState([]);
+
   // Arena State
+  const [arenaRuleset, setArenaRuleset] = useState('standard');
   const [arenaSlots, setArenaSlots] = useState({ p1: null, p2: null });
   const [battleLog, setBattleLog] = useState("[ WAITING FOR DATA INPUT ]");
   const [isClashing, setIsClashing] = useState(false);
@@ -69,6 +113,23 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
     document.documentElement.style.setProperty('--noise-opacity', aesthetics.noise / 100);
   }, [aesthetics]);
 
+  // Initialize and Sync Arena Slots based on Ruleset
+  useEffect(() => {
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+    const initialSlots = {};
+    activeRuleset.zones.forEach((zone) => {
+      initialSlots[zone.id] = null;
+    });
+    setArenaSlots(initialSlots);
+    setBattleLog(
+      arenaMode === 'combatDisabled'
+        ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
+        : arenaRuleset === 'standard'
+          ? '[ WAITING FOR DATA INPUT ]'
+          : `[ ${activeRuleset.name.toUpperCase()} INITIALIZED ]`
+    );
+  }, [arenaRuleset]);
+
   // Capacitor Mobile Integrations
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -80,27 +141,35 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   // --- HANDLERS ---
   const handleArenaSelect = (card) => {
     if (isClashing) return;
-    if (!arenaSlots.p1) {
-      setArenaSlots({ ...arenaSlots, p1: card });
-      setBattleLog(
-        arenaMode === 'combatDisabled'
-          ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
-          : '[ ALPHA SLOT FILLED ]',
-      );
-    } else if (!arenaSlots.p2) {
-      setArenaSlots({ ...arenaSlots, p2: card });
-      setBattleLog(
-        arenaMode === 'combatDisabled'
-          ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
-          : '[ READY FOR COLLISION ]',
-      );
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+    const clashSlots = activeRuleset.clashSlots;
+    
+    // Find the first empty clash slot
+    const emptySlot = clashSlots.find(slotId => !arenaSlots[slotId]);
+    if (emptySlot) {
+      // Validate banlist at boundary
+      if (activeRuleset.bannedCardIds.includes(card.id)) {
+        setBattleLog(`[ ERR: CARD ${card.id} BANNED IN ${activeRuleset.name.toUpperCase()} ]`);
+        if (telemetry) {
+          telemetry.log('warn', 'CARD_BAN_VIOLATION', { cardId: card.id, rulesetId: activeRuleset.id });
+        }
+        return;
+      }
+
+      setArenaSlots(prev => ({ ...prev, [emptySlot]: card }));
+      setBattleLog(`[ ${emptySlot.toUpperCase()} FILLED ]`);
     }
   };
 
   const handleResolveBattle = () => {
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+    const clashSlots = activeRuleset.clashSlots;
+    const p1 = arenaSlots[clashSlots[0]];
+    const p2 = arenaSlots[clashSlots[1]];
+
     if (
-      !arenaSlots.p1 ||
-      !arenaSlots.p2 ||
+      !p1 ||
+      !p2 ||
       isClashing ||
       arenaMode === 'combatDisabled'
     )
@@ -111,9 +180,10 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
 
     setTimeout(() => {
       const result = resolveBattleWithEngine(
-        arenaSlots.p1,
-        arenaSlots.p2,
+        p1,
+        p2,
         arenaMode,
+        arenaRuleset
       );
       setBattleLog(result.logLine);
       setIsClashing(false);
@@ -122,7 +192,12 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
 
   const clearArena = () => {
     if (isClashing) return;
-    setArenaSlots({ p1: null, p2: null });
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+    const clearedSlots = {};
+    activeRuleset.zones.forEach(z => {
+      clearedSlots[z.id] = null;
+    });
+    setArenaSlots(clearedSlots);
     setBattleLog(
       arenaMode === 'combatDisabled'
         ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
@@ -131,8 +206,14 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   };
 
   const handleDrawSpread = () => {
-    const cardCount = oracleLayout === 'celticCross' ? 5 : 3;
+    let cardCount = 3;
+    if (oracleLayout === 'celticCross') {
+      cardCount = 5;
+    } else if (['mtg', 'yugioh', 'pokemon'].includes(oracleLayout)) {
+      cardCount = 4;
+    }
     setSpread(drawSpread(deck, cardCount));
+    setRevealedCardIds([]); // Reset reveals on new draw
   };
 
   const handleImageUpload = (e) => {
@@ -154,177 +235,481 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
 
   // --- VIEWS ---
   const renderDexView = () => (
-    <div data-testid="aether-view-dex" className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pb-24">
-      {deck.map(card => (
-        <div key={card.id} className="flex justify-center transform hover:-translate-y-2 transition-transform duration-300">
-          <Card data={card} isFlipped={true} onClick={() => setSelectedCard(card)} deckBack={deckBack} />
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderArenaView = () => (
-    <div
-      data-testid="aether-view-arena"
-      className="flex flex-col h-full p-4 max-w-4xl mx-auto"
-    >
-      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 my-4">
-        {/* Alpha Slot */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-indigo-400 font-mono text-xs tracking-widest glitch-text">
-            ALPHA SLOT
-          </span>
-          {arenaSlots.p1 ? (
-            <Card
-              data={arenaSlots.p1}
-              isFlipped={true}
-              clashing={isClashing}
-              onClick={() => setArenaSlots({ ...arenaSlots, p1: null })}
-              deckBack={deckBack}
-            />
-          ) : (
-            <div className="w-64 h-[28rem] rounded-xl border-2 border-dashed border-indigo-500/20 bg-indigo-900/10 flex items-center justify-center text-indigo-400/30 font-mono text-sm">
-              AWAITING_DATA
-            </div>
-          )}
-        </div>
-
-        {/* Console / Controls */}
-        <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
-          <div
-            className={`w-full md:min-w-[240px] bg-black/80 backdrop-blur p-4 rounded border ${isClashing ? 'border-red-500 text-red-500' : 'border-white/10 text-indigo-300'} text-center transition-colors`}
-            data-testid="aether-arena-log"
-          >
-            <p
-              className={`text-xs font-mono uppercase tracking-wider ${isClashing ? 'glitch-hover animate-pulse' : ''}`}
-            >
-              {battleLog}
-            </p>
-          </div>
-
-          {/* Arena Mode Selector */}
-          <div className="w-full md:min-w-[240px] flex flex-col gap-1.5">
-            <label className="text-[10px] font-mono text-indigo-400/70 uppercase tracking-widest text-center">
-              Arena Mode
-            </label>
-            <select
-              data-testid="aether-arena-mode-select"
-              value={arenaMode}
-              onChange={(e) => {
-                const selectedMode = e.target.value;
-                setArenaMode(selectedMode);
-                if (selectedMode === 'combatDisabled') {
-                  setBattleLog('> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.');
-                } else {
-                  setBattleLog(
-                    arenaSlots.p1 && arenaSlots.p2
-                      ? '[ READY FOR COLLISION ]'
-                      : '[ WAITING FOR DATA INPUT ]',
-                  );
-                }
-              }}
-              className="w-full bg-slate-900/80 border border-white/10 rounded px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-indigo-500 text-center appearance-none cursor-pointer"
-            >
-              {Object.values(arenaModes).map((mode) => (
-                <option key={mode.id} value={mode.id}>
-                  {mode.name.toUpperCase()}
-                </option>
-              ))}
-            </select>
-            <p className="text-[9px] font-mono text-white/30 text-center max-w-[240px]">
-              {arenaModes[arenaMode]?.description}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            data-testid="aether-arena-clash"
-            onClick={handleResolveBattle}
-            disabled={
-              !arenaSlots.p1 ||
-              !arenaSlots.p2 ||
-              isClashing ||
-              arenaMode === 'combatDisabled'
-            }
-            className={`w-full md:w-auto px-8 py-3 rounded-none border border-transparent font-bold tracking-widest transition-all ${
-              isClashing
-                ? 'bg-white text-black animate-pulse'
-                : !arenaSlots.p1 ||
-                    !arenaSlots.p2 ||
-                    arenaMode === 'combatDisabled'
-                  ? 'bg-slate-800 text-white/30 cursor-not-allowed'
-                  : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:border-red-400'
-            }`}
-          >
-            {isClashing
-              ? 'PROCESSING...'
-              : arenaMode === 'combatDisabled'
-                ? 'COMBAT DISABLED'
-                : 'INITIATE CLASH'}
-          </button>
-
-          <button
-            type="button"
-            data-testid="aether-arena-flush"
-            onClick={clearArena}
-            className="text-[10px] font-mono text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 px-2 py-1 rounded"
-          >
-            Flush_Memory
-          </button>
-        </div>
-
-        {/* Omega Slot */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-red-400 font-mono text-xs tracking-widest glitch-text">
-            OMEGA SLOT
-          </span>
-          {arenaSlots.p2 ? (
-            <Card
-              data={arenaSlots.p2}
-              isFlipped={true}
-              clashing={isClashing}
-              onClick={() => setArenaSlots({ ...arenaSlots, p2: null })}
-              deckBack={deckBack}
-            />
-          ) : (
-            <div className="w-64 h-[28rem] rounded-xl border-2 border-dashed border-red-500/20 bg-red-900/10 flex items-center justify-center text-red-400/30 font-mono text-sm">
-              AWAITING_DATA
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bench */}
-      <div className="mt-auto pt-4 border-t border-white/10 bg-black/20">
-        <p className="text-[10px] text-white/30 font-mono text-center mb-2 uppercase">
-          Local_Storage_Array
-        </p>
-        <div className="overflow-x-auto hide-scrollbar flex items-center gap-4 px-4 pb-4 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
-          {deck.map((card) => (
-            <div
-              key={card.id}
-              className={`shrink-0 scale-75 origin-bottom hover:scale-90 transition-transform ${arenaSlots.p1?.id === card.id || arenaSlots.p2?.id === card.id ? 'opacity-20 pointer-events-none' : ''}`}
-            >
-              <Card
-                data={card}
-                isFlipped={true}
-                onClick={() => handleArenaSelect(card)}
-                size="sm"
-                deckBack={deckBack}
+    <div data-testid="aether-view-dex" className="p-4 space-y-6 pb-24">
+      {/* Deck Management Bar */}
+      <div className="bg-slate-900/80 border border-white/10 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Layers className="text-indigo-400" size={20} />
+          {editingDeckId === activeDeckId ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={editingDeckName}
+                onChange={(e) => setEditingDeckName(e.target.value)}
+                className="bg-slate-950 border border-white/20 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500"
               />
+              <button
+                onClick={() => {
+                  renameDeck(activeDeckId, editingDeckName);
+                  setEditingDeckId(null);
+                }}
+                className="p-1 bg-emerald-600/30 border border-emerald-500 text-emerald-400 rounded hover:bg-emerald-600 hover:text-white transition-colors"
+              >
+                <Check size={14} />
+              </button>
             </div>
-          ))}
-          <div className="w-12 shrink-0" /> {/* Spacer for scroll mask */}
+          ) : (
+            <div className="flex items-center gap-2">
+              <select
+                data-testid="aether-deck-select"
+                value={activeDeckId}
+                onChange={(e) => switchDeck(e.target.value)}
+                className="bg-slate-950 border border-white/10 rounded px-3 py-1.5 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                {decks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  setEditingDeckId(activeDeckId);
+                  setEditingDeckName(
+                    decks.find((d) => d.id === activeDeckId).name,
+                  );
+                }}
+                className="p-1.5 text-white/50 hover:text-white hover:bg-white/5 rounded transition-colors"
+                title="Rename Deck"
+              >
+                <Edit3 size={14} />
+              </button>
+            </div>
+          )}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          {showCreateDeckInput ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="DECK NAME"
+                value={newDeckName}
+                onChange={(e) => setNewDeckName(e.target.value)}
+                className="bg-slate-950 border border-white/20 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                onClick={() => {
+                  if (newDeckName.trim()) {
+                    createDeck(newDeckName.trim());
+                    setNewDeckName('');
+                    setShowCreateDeckInput(false);
+                  }
+                }}
+                className="p-1 bg-emerald-600/30 border border-emerald-500 text-emerald-400 rounded hover:bg-emerald-600 hover:text-white transition-colors"
+              >
+                <Check size={14} />
+              </button>
+              <button
+                onClick={() => setShowCreateDeckInput(false)}
+                className="p-1 bg-red-600/30 border border-red-500 text-red-400 rounded hover:bg-red-600 hover:text-white transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowCreateDeckInput(true)}
+              className="flex items-center gap-1.5 bg-indigo-950/40 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white text-indigo-300 px-3 py-1.5 rounded font-mono text-xs tracking-wider transition-all"
+            >
+              <Plus size={14} /> NEW_DECK
+            </button>
+          )}
+
+          <button
+            onClick={() => duplicateDeck(activeDeckId)}
+            className="flex items-center gap-1.5 bg-indigo-950/40 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white text-indigo-300 px-3 py-1.5 rounded font-mono text-xs tracking-wider transition-all"
+          >
+            <Copy size={14} /> CLONE_DECK
+          </button>
+
+          <button
+            onClick={() => deleteDeck(activeDeckId)}
+            disabled={decks.length <= 1}
+            className="flex items-center gap-1.5 bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-300 px-3 py-1.5 rounded font-mono text-xs tracking-wider transition-all disabled:opacity-35 disabled:pointer-events-none"
+          >
+            <Trash2 size={14} /> DELETE_DECK
+          </button>
+
+          <button
+            onClick={() => setShowDeckBacks(!showDeckBacks)}
+            className={`flex items-center gap-1.5 border px-3 py-1.5 rounded font-mono text-xs tracking-wider transition-all ${showDeckBacks ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-950 border-white/10 hover:bg-white/5 text-white/70'}`}
+          >
+            {showDeckBacks ? <EyeOff size={14} /> : <Eye size={14} />}{' '}
+            CARD_BACKS
+          </button>
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        {deck.map((card) => (
+          <div
+            key={card.id}
+            className="flex justify-center transform hover:-translate-y-2 transition-transform duration-300"
+          >
+            <Card
+              data={card}
+              isFlipped={!showDeckBacks}
+              onClick={() => {
+                setSelectedCard(card);
+                setModalCardFlipped(true);
+              }}
+              deckBack={deckBack}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
+
+  const renderArenaZone = (zone) => {
+    const card = arenaSlots[zone.id];
+    const isOver = dragOverSlot === zone.id;
+    const isFlipped = card ? (zone.isFaceDown ? revealedCardIds.includes(card.id) : true) : false;
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+
+    return (
+      <div
+        key={zone.id}
+        className={`flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all ${isOver ? 'border-indigo-500 bg-indigo-500/10 scale-105 shadow-[0_0_20px_rgba(99,102,241,0.4)]' : 'border-transparent'}`}
+        onDragOver={(e) => e.preventDefault()}
+        onDragEnter={() => setDragOverSlot(zone.id)}
+        onDragLeave={() => setDragOverSlot(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOverSlot(null);
+          const cardId = e.dataTransfer.getData('text/plain');
+          const foundCard = deck.find((c) => c.id === cardId);
+          if (foundCard) {
+            // Validate banlist at boundary
+            if (activeRuleset.bannedCardIds.includes(foundCard.id)) {
+              setBattleLog(`[ ERR: CARD ${foundCard.id} BANNED IN ${activeRuleset.name.toUpperCase()} ]`);
+              if (telemetry) {
+                telemetry.log('warn', 'CARD_BAN_VIOLATION', { cardId: foundCard.id, rulesetId: activeRuleset.id });
+              }
+              return;
+            }
+
+            setArenaSlots((prev) => ({ ...prev, [zone.id]: foundCard }));
+            setBattleLog(`[ ${zone.label.toUpperCase()} FILLED ]`);
+          }
+        }}
+      >
+        <span className="text-[9px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-2.5 py-0.5 rounded-full text-center">
+          {zone.label}
+        </span>
+        {card ? (
+          <Card
+            data={card}
+            isFlipped={isFlipped}
+            size={zone.size || 'sm'}
+            clashing={isClashing && (activeRuleset.clashSlots || []).includes(zone.id)}
+            onClick={() => {
+              if (zone.isFaceDown && !isFlipped) {
+                setRevealedCardIds((prev) => [...prev, card.id]);
+              } else {
+                setArenaSlots((prev) => ({ ...prev, [zone.id]: null }));
+              }
+            }}
+            deckBack={deckBack}
+          />
+        ) : (
+          <div
+            className={`rounded-xl border-2 border-dashed border-indigo-500/20 bg-indigo-900/5 flex items-center justify-center text-indigo-400/20 font-mono text-xs text-center ${zone.size === 'sm' ? 'w-24 h-40' : 'w-64 h-[28rem]'}`}
+          >
+            DROP_HERE
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderArenaView = () => {
+    const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
+    const p2Zones = activeRuleset.zones.filter((z) => z.player === 2);
+    const p1Zones = activeRuleset.zones.filter((z) => z.player === 1);
+    const globalZones = activeRuleset.zones.filter((z) => z.scope === 'global');
+    const clashSlots = activeRuleset.clashSlots;
+    const p1ClashCard = arenaSlots[clashSlots[0]];
+    const p2ClashCard = arenaSlots[clashSlots[1]];
+
+    return (
+      <div
+        data-testid="aether-view-arena"
+        className="flex flex-col h-full p-4 max-w-6xl mx-auto space-y-6"
+      >
+        {/* Header */}
+        <div className="text-center space-y-1">
+          <h2 className="text-2xl font-light text-indigo-300 glitch-text tracking-widest">
+            THE ARENA
+          </h2>
+          <p className="text-white/40 font-mono text-[10px]">
+            {activeRuleset.name.toUpperCase()} ACTIVE
+          </p>
+        </div>
+
+        {/* Playmat Grid */}
+        <div className="flex-1 flex flex-col gap-6 bg-slate-950/40 p-6 rounded-2xl border border-white/5 shadow-inner">
+          {/* Player 2 (Top) Zones */}
+          {p2Zones.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-4 border-b border-white/5 pb-4">
+              {p2Zones.map(renderArenaZone)}
+            </div>
+          )}
+
+          {/* Middle Row: Global Zones + Console + Player 1/2 Standard Slots */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            {/* Global Zones */}
+            {globalZones.length > 0 && (
+              <div className="flex flex-col gap-4">
+                {globalZones.map(renderArenaZone)}
+              </div>
+            )}
+
+            {/* Standard Slots (when no player-specific zones exist, e.g. Standard ruleset) */}
+            {p2Zones.length === 0 && p1Zones.length === 0 && (
+              <div className="flex items-center gap-6">
+                {renderArenaZone(activeRuleset.zones[0])}
+                {renderArenaZone(activeRuleset.zones[1])}
+              </div>
+            )}
+
+            {/* Console / Controls */}
+            <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto bg-black/40 p-4 rounded-xl border border-white/5">
+              <div
+                className={`w-full md:min-w-[240px] bg-black/80 backdrop-blur p-4 rounded border ${isClashing ? 'border-red-500 text-red-500' : 'border-white/10 text-indigo-300'} text-center transition-colors`}
+                data-testid="aether-arena-log"
+              >
+                <p
+                  className={`text-xs font-mono uppercase tracking-wider ${isClashing ? 'glitch-hover animate-pulse' : ''}`}
+                >
+                  {battleLog}
+                </p>
+              </div>
+
+              {/* Arena Ruleset Selector */}
+              <div className="w-full md:min-w-[240px] flex flex-col gap-1">
+                <label className="text-[9px] font-mono text-indigo-400/70 uppercase tracking-widest text-center">
+                  Ruleset
+                </label>
+                <select
+                  data-testid="aether-arena-ruleset-select"
+                  value={arenaRuleset}
+                  onChange={(e) => {
+                    setArenaRuleset(e.target.value);
+                  }}
+                  className="w-full bg-slate-900/80 border border-white/10 rounded px-3 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-indigo-500 text-center appearance-none cursor-pointer"
+                >
+                  {Object.values(rulesets).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Arena Mode Selector */}
+              <div className="w-full md:min-w-[240px] flex flex-col gap-1">
+                <label className="text-[9px] font-mono text-indigo-400/70 uppercase tracking-widest text-center">
+                  Arena Mode
+                </label>
+                <select
+                  data-testid="aether-arena-mode-select"
+                  value={arenaMode}
+                  onChange={(e) => {
+                    const selectedMode = e.target.value;
+                    setArenaMode(selectedMode);
+                    if (selectedMode === 'combatDisabled') {
+                      setBattleLog('> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.');
+                    } else {
+                      setBattleLog(
+                        p1ClashCard && p2ClashCard
+                          ? '[ READY FOR COLLISION ]'
+                          : '[ WAITING FOR DATA INPUT ]',
+                      );
+                    }
+                  }}
+                  className="w-full bg-slate-900/80 border border-white/10 rounded px-3 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-indigo-500 text-center appearance-none cursor-pointer"
+                >
+                  {Object.values(arenaModes).map((mode) => (
+                    <option key={mode.id} value={mode.id}>
+                      {mode.name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[8px] font-mono text-white/30 text-center max-w-[240px]">
+                  {arenaModes[arenaMode]?.description}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                data-testid="aether-arena-clash"
+                onClick={handleResolveBattle}
+                disabled={
+                  !p1ClashCard ||
+                  !p2ClashCard ||
+                  isClashing ||
+                  arenaMode === 'combatDisabled'
+                }
+                className={`w-full md:w-auto px-6 py-2 rounded-none border border-transparent font-bold tracking-widest text-xs transition-all ${
+                  isClashing
+                    ? 'bg-white text-black animate-pulse'
+                    : !p1ClashCard ||
+                        !p2ClashCard ||
+                        arenaMode === 'combatDisabled'
+                      ? 'bg-slate-800 text-white/30 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:border-red-400'
+                }`}
+              >
+                {isClashing
+                  ? 'PROCESSING...'
+                  : arenaMode === 'combatDisabled'
+                    ? 'COMBAT DISABLED'
+                    : 'INITIATE CLASH'}
+              </button>
+
+              <button
+                type="button"
+                data-testid="aether-arena-flush"
+                onClick={clearArena}
+                className="text-[9px] font-mono text-white/40 hover:text-white uppercase tracking-widest hover:bg-white/5 px-2 py-0.5 rounded"
+              >
+                Flush_Memory
+              </button>
+            </div>
+          </div>
+
+          {/* Player 1 (Bottom) Zones */}
+          {p1Zones.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-4 border-t border-white/5 pt-4">
+              {p1Zones.map(renderArenaZone)}
+            </div>
+          )}
+        </div>
+
+        {/* Bench / Deck Drawer */}
+        <div className="mt-auto pt-4 border-t border-white/10 bg-black/20 rounded-xl p-4">
+          <p className="text-[10px] text-white/30 font-mono text-center mb-2 uppercase tracking-widest">
+            Local_Storage_Array (Drag Cards to Slots)
+          </p>
+          <div className="overflow-x-auto hide-scrollbar flex items-center gap-4 px-4 pb-4 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+            {deck.map((card) => {
+              const isPlaced = Object.values(arenaSlots).some((slotCard) => slotCard?.id === card.id);
+              return (
+                <div
+                  key={card.id}
+                  draggable={!isPlaced}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', card.id);
+                  }}
+                  className={`shrink-0 scale-75 origin-bottom hover:scale-90 transition-transform cursor-grab active:cursor-grabbing ${isPlaced ? 'opacity-20 pointer-events-none' : ''}`}
+                >
+                  <Card
+                    data={card}
+                    isFlipped={true}
+                    onClick={() => handleArenaSelect(card)}
+                    size="sm"
+                    deckBack={deckBack}
+                  />
+                </div>
+              );
+            })}
+            <div className="w-12 shrink-0" /> {/* Spacer for scroll mask */}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleDropOnOracleZone = (cardId, zoneIndex) => {
+    const foundCard = deck.find((c) => c.id === cardId);
+    if (foundCard) {
+      setSpread((prev) => {
+        const next = [...prev];
+        while (next.length <= zoneIndex) {
+          next.push(null);
+        }
+        next[zoneIndex] = foundCard;
+        return next;
+      });
+      // Automatically reveal dragged cards
+      setRevealedCardIds((prev) => [...prev, foundCard.id]);
+    }
+  };
+
+  const renderOracleZone = (
+    card,
+    label,
+    index,
+    size = 'md',
+    extraClasses = '',
+  ) => {
+    const isOver = oracleDragOverZone === index;
+    const isFlipped = card ? revealedCardIds.includes(card.id) : false;
+
+    return (
+      <div
+        className={`flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all ${isOver ? 'border-indigo-500 bg-indigo-500/10 scale-105 shadow-[0_0_20px_rgba(99,102,241,0.4)]' : 'border-transparent'} ${extraClasses}`}
+        onDragOver={(e) => e.preventDefault()}
+        onDragEnter={() => setOracleDragOverZone(index)}
+        onDragLeave={() => setOracleDragOverZone(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOracleDragOverZone(null);
+          const cardId = e.dataTransfer.getData('text/plain');
+          handleDropOnOracleZone(cardId, index);
+        }}
+      >
+        <span className="text-[9px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-2.5 py-0.5 rounded-full text-center">
+          {label}
+        </span>
+        {card ? (
+          <Card
+            data={card}
+            isFlipped={isFlipped}
+            size={size}
+            deckBack={deckBack}
+            onClick={() => {
+              if (!isFlipped) {
+                setRevealedCardIds((prev) => [...prev, card.id]);
+              }
+            }}
+          />
+        ) : (
+          <div
+            className={`rounded-xl border-2 border-dashed border-indigo-500/20 bg-indigo-900/5 flex items-center justify-center text-indigo-400/20 font-mono text-xs text-center ${size === 'sm' ? 'w-24 h-40' : 'w-64 h-[28rem]'}`}
+          >
+            DROP_HERE
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderOracleView = () => (
-    <div data-testid="aether-view-oracle" className="flex flex-col items-center justify-center min-h-[80vh] gap-8 p-4">
+    <div
+      data-testid="aether-view-oracle"
+      className="flex flex-col items-center justify-center min-h-[80vh] gap-8 p-4"
+    >
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-light text-indigo-300 glitch-text tracking-widest">THE ORACLE</h2>
-        <p className="text-white/40 font-mono text-xs max-w-md mx-auto">Accessing probabilistic timelines...</p>
+        <h2 className="text-3xl font-light text-indigo-300 glitch-text tracking-widest">
+          THE ORACLE
+        </h2>
+        <p className="text-white/40 font-mono text-xs max-w-md mx-auto">
+          Accessing probabilistic timelines...
+        </p>
       </div>
 
       {/* Oracle Layout Selector */}
@@ -338,6 +723,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
           onChange={(e) => {
             setOracleLayout(e.target.value);
             setSpread([]);
+            setRevealedCardIds([]);
           }}
           className="w-full bg-slate-900/80 border border-white/10 rounded px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-indigo-500 text-center appearance-none cursor-pointer"
         >
@@ -353,102 +739,174 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
           // Render Active Spread
           oracleLayout === 'threeCard' ? (
             <div className="flex flex-col md:flex-row gap-8 lg:gap-12 perspective-1000">
-              {spread.map((card, index) => (
-                <div key={card.id} className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: `${index * 200}ms`}}>
-                  <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">
-                    {index === 0 ? 'T-Minus (Past)' : index === 1 ? 'T-Zero (Present)' : 'T-Plus (Future)'}
-                  </span>
-                  <Card data={card} isFlipped={true} deckBack={deckBack} />
-                </div>
-              ))}
+              {renderOracleZone(spread[0], 'T-Minus (Past)', 0, 'md')}
+              {renderOracleZone(spread[1], 'T-Zero (Present)', 1, 'md')}
+              {renderOracleZone(spread[2], 'T-Plus (Future)', 2, 'md')}
             </div>
           ) : oracleLayout === 'celticCross' ? (
             <div className="flex flex-col md:grid md:grid-cols-3 gap-8 items-center justify-items-center max-w-4xl">
               {/* Row 1: Goal */}
               <div></div>
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '400ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Goal</span>
-                <Card data={spread[2]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
+              {renderOracleZone(spread[2], 'Goal', 2, 'sm')}
               <div></div>
 
               {/* Row 2: Past, Present/Obstacle, Future */}
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '600ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Past</span>
-                <Card data={spread[3]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
-              <div className="relative w-24 h-40 flex items-center justify-center animate-in fade-in duration-700">
+              {renderOracleZone(spread[3], 'Past', 3, 'sm')}
+              <div
+                className={`relative w-24 h-40 flex items-center justify-center rounded-xl border-2 transition-all ${oracleDragOverZone === 0 || oracleDragOverZone === 1 ? 'border-indigo-500 bg-indigo-500/10 scale-105 shadow-[0_0_20px_rgba(99,102,241,0.4)]' : 'border-transparent'}`}
+                onDragOver={(e) => e.preventDefault()}
+                onDragEnter={() => setOracleDragOverZone(0)}
+                onDragLeave={() => setOracleDragOverZone(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setOracleDragOverZone(null);
+                  const cardId = e.dataTransfer.getData('text/plain');
+                  if (!spread[0]) {
+                    handleDropOnOracleZone(cardId, 0);
+                  } else {
+                    handleDropOnOracleZone(cardId, 1);
+                  }
+                }}
+              >
+                {/* Under card (Present) */}
                 <div className="absolute z-10">
-                  <Card data={spread[0]} isFlipped={true} deckBack={deckBack} size="sm" />
+                  {spread[0] ? (
+                    <Card
+                      data={spread[0]}
+                      isFlipped={revealedCardIds.includes(spread[0].id)}
+                      size="sm"
+                      deckBack={deckBack}
+                      onClick={() => {
+                        if (!revealedCardIds.includes(spread[0].id)) {
+                          setRevealedCardIds((prev) => [...prev, spread[0].id]);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-24 h-40 rounded-xl border-2 border-dashed border-indigo-500/20 bg-indigo-900/5 flex items-center justify-center text-indigo-400/20 font-mono text-[10px]">
+                      PRESENT
+                    </div>
+                  )}
                 </div>
+                {/* Cross card (Obstacle) - rotated 90 degrees */}
                 <div className="absolute z-20 rotate-90 opacity-90 scale-95">
-                  <Card data={spread[1]} isFlipped={true} deckBack={deckBack} size="sm" />
+                  {spread[1] ? (
+                    <Card
+                      data={spread[1]}
+                      isFlipped={revealedCardIds.includes(spread[1].id)}
+                      size="sm"
+                      deckBack={deckBack}
+                      onClick={() => {
+                        if (!revealedCardIds.includes(spread[1].id)) {
+                          setRevealedCardIds((prev) => [...prev, spread[1].id]);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-24 h-40 rounded-xl border-2 border-dashed border-indigo-500/20 bg-indigo-900/5 flex items-center justify-center text-indigo-400/20 font-mono text-[10px]">
+                      OBSTACLE
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '800ms'}}>
-                <span className="text-[10px] font-mono text-white/40 tracking-widest uppercase border border-white/10 bg-black/50 px-3 py-1 rounded-full">Future</span>
-                <Card data={spread[4]} isFlipped={true} deckBack={deckBack} size="sm" />
-              </div>
+              {renderOracleZone(spread[4], 'Future', 4, 'sm')}
 
               {/* Row 3: Label */}
               <div></div>
-              <div className="text-center text-[9px] font-mono text-indigo-400/60 uppercase tracking-widest animate-in fade-in duration-1000">
+              <div className="text-center text-[9px] font-mono text-indigo-400/60 uppercase tracking-widest">
                 Present (Under) / Obstacle (Cross)
               </div>
               <div></div>
             </div>
           ) : (
-            // theClash Layout
             <div className="flex flex-col gap-8 items-center">
               <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
-                <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-700">
-                  <span className="text-[10px] font-mono text-indigo-400 tracking-widest uppercase border border-indigo-500/20 bg-black/50 px-3 py-1 rounded-full">Alpha (Thesis)</span>
-                  <Card data={spread[0]} isFlipped={true} deckBack={deckBack} />
-                </div>
-                <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: '200ms'}}>
-                  <span className="text-[10px] font-mono text-red-400 tracking-widest uppercase border border-red-500/20 bg-black/50 px-3 py-1 rounded-full">Omega (Antithesis)</span>
-                  <Card data={spread[1]} isFlipped={true} deckBack={deckBack} />
-                </div>
+                {renderOracleZone(spread[0], 'Alpha (Thesis)', 0, 'md')}
+                {renderOracleZone(spread[1], 'Omega (Antithesis)', 1, 'md')}
               </div>
-              <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000" style={{animationDelay: '500ms'}}>
-                <span className="text-[10px] font-mono text-purple-400 tracking-widest uppercase border border-purple-500/20 bg-black/50 px-3 py-1 rounded-full">Synthesis (Outcome)</span>
-                <Card data={spread[2]} isFlipped={true} deckBack={deckBack} />
-              </div>
+              {renderOracleZone(spread[2], 'Synthesis (Outcome)', 2, 'md')}
             </div>
           )
+        ) : // Render Placeholders
+        oracleLayout === 'celticCross' ? (
+          <div className="grid grid-cols-3 gap-8 items-center justify-items-center opacity-30 max-w-4xl">
+            <div></div>
+            <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+            <div></div>
+            <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+            <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+            <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+          </div>
+        ) : oracleLayout === 'theClash' ? (
+          <div className="flex flex-col gap-8 items-center opacity-30">
+            <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
+              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+            </div>
+            <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+          </div>
         ) : (
-          // Render Placeholders
-          oracleLayout === 'celticCross' ? (
-            <div className="grid grid-cols-3 gap-8 items-center justify-items-center opacity-30 max-w-4xl">
-              <div></div>
-              <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-              <div></div>
-              <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-              <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-              <div className="w-24 h-40 rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-            </div>
-          ) : oracleLayout === 'theClash' ? (
-            <div className="flex flex-col gap-8 items-center opacity-30">
-              <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
-                <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-                <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-              </div>
-              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-            </div>
-          ) : (
-            <div className="flex gap-8 lg:gap-12 opacity-30">
-              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
-              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed hidden md:block"></div>
-              <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed hidden md:block"></div>
-            </div>
-          )
+          <div className="flex gap-8 lg:gap-12 opacity-30">
+            <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed"></div>
+            <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed hidden md:block"></div>
+            <div className="w-64 h-[28rem] rounded-xl bg-slate-800/50 border border-white/10 border-dashed hidden md:block"></div>
+          </div>
         )}
       </div>
 
-      <button type="button" data-testid="aether-oracle-draw" onClick={handleDrawSpread} className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group">
-        <Shuffle size={16} className="group-hover:animate-spin" />
-        {spread.length > 0 ? 'RECALCULATE' : 'INITIALIZE SEQUENCE'}
-      </button>
+      <div className="flex gap-4">
+        {spread.length > 0 &&
+          revealedCardIds.length < spread.filter(Boolean).length && (
+            <button
+              type="button"
+              onClick={() =>
+                setRevealedCardIds(spread.filter(Boolean).map((c) => c.id))
+              }
+              className="flex items-center gap-2 bg-emerald-900/50 border border-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95"
+            >
+              <Eye size={16} /> REVEAL ALL
+            </button>
+          )}
+        <button
+          type="button"
+          data-testid="aether-oracle-draw"
+          onClick={handleDrawSpread}
+          className="flex items-center gap-2 bg-indigo-900/50 border border-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded font-mono text-sm tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 group"
+        >
+          <Shuffle size={16} className="group-hover:animate-spin" />
+          {spread.length > 0 ? 'RECALCULATE' : 'INITIALIZE SEQUENCE'}
+        </button>
+      </div>
+
+      {/* Deck Drawer (Bench) */}
+      <div className="w-full mt-8 pt-4 border-t border-white/10 bg-black/20 rounded-xl p-4">
+        <p className="text-[10px] text-white/30 font-mono text-center mb-2 uppercase tracking-widest">
+          Deck Drawer — Drag Cards onto Playmat Zones
+        </p>
+        <div className="overflow-x-auto hide-scrollbar flex items-center gap-4 px-4 pb-4 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
+          {deck.map((card) => {
+            const isPlaced = spread.some((c) => c && c.id === card.id);
+            return (
+              <div
+                key={card.id}
+                draggable={!isPlaced}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', card.id);
+                }}
+                className={`shrink-0 scale-75 origin-bottom hover:scale-90 transition-transform ${isPlaced ? 'opacity-20 pointer-events-none' : 'cursor-grab active:cursor-grabbing'}`}
+              >
+                <Card
+                  data={card}
+                  isFlipped={true}
+                  size="sm"
+                  deckBack={deckBack}
+                />
+              </div>
+            );
+          })}
+          <div className="w-12 shrink-0" /> {/* Spacer for scroll mask */}
+        </div>
+      </div>
     </div>
   );
 
@@ -918,7 +1376,16 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
             >
               <X size={24} />
             </button>
-            <Card data={selectedCard} isFlipped={true} size="lg" deckBack={deckBack} />
+            <Card
+              data={selectedCard}
+              isFlipped={modalCardFlipped}
+              size="lg"
+              deckBack={deckBack}
+              onClick={() => setModalCardFlipped(!modalCardFlipped)}
+            />
+            <p className="text-center text-white/40 font-mono text-[10px] uppercase tracking-widest mt-4 animate-pulse">
+              Click Card to Flip
+            </p>
           </div>
         </div>
       )}
