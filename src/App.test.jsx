@@ -189,4 +189,83 @@ describe('App', () => {
       'COMBAT DISABLED',
     );
   });
+
+  it('allows selecting a custom deck back in the Settings modal', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Open settings modal
+    await user.click(screen.getByTestId('aether-settings-open-desktop'));
+    expect(screen.getByTestId('aether-modal-settings')).toBeInTheDocument();
+
+    // Select 'Cyberpunk Grid' deck back
+    const select = screen.getByTestId('aether-settings-deckback');
+    expect(select).toBeInTheDocument();
+    expect(select.value).toBe('standard');
+
+    await user.selectOptions(select, 'cyberpunkGrid');
+    expect(select.value).toBe('cyberpunkGrid');
+  });
+
+  it('allows customizing frame, hat, rarity, and ability in the Forge view', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Check selectors exist
+    const frameSelect = screen.getByTestId('aether-forge-frame');
+    const hatSelect = screen.getByTestId('aether-forge-hat');
+    const raritySelect = screen.getByTestId('aether-forge-rarity');
+    const abilitySelect = screen.getByTestId('aether-forge-ability');
+
+    expect(frameSelect).toBeInTheDocument();
+    expect(hatSelect).toBeInTheDocument();
+    expect(raritySelect).toBeInTheDocument();
+    expect(abilitySelect).toBeInTheDocument();
+
+    // Select custom properties
+    await user.selectOptions(frameSelect, 'glitchMatrix');
+    await user.selectOptions(hatSelect, 'cyberCrown');
+    await user.selectOptions(raritySelect, 'glitched');
+    await user.selectOptions(abilitySelect, 'voidShield');
+
+    expect(frameSelect.value).toBe('glitchMatrix');
+    expect(hatSelect.value).toBe('cyberCrown');
+    expect(raritySelect.value).toBe('glitched');
+    expect(abilitySelect.value).toBe('voidShield');
+  });
+
+  it('allows changing Oracle layouts and drawing different card counts', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-oracle'));
+
+    const layoutSelect = screen.getByTestId('aether-oracle-layout-select');
+    expect(layoutSelect).toBeInTheDocument();
+    expect(layoutSelect.value).toBe('threeCard');
+
+    // Draw standard 3 card spread
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+    expect(screen.getByText('T-Minus (Past)')).toBeInTheDocument();
+
+    // Change to Celtic Cross (clears spread)
+    await user.selectOptions(layoutSelect, 'celticCross');
+    expect(screen.queryByText('T-Minus (Past)')).not.toBeInTheDocument();
+
+    // Draw Celtic Cross (5 cards)
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+    expect(screen.getByText('Goal')).toBeInTheDocument();
+    expect(screen.getByText('Past')).toBeInTheDocument();
+    expect(screen.getByText('Future')).toBeInTheDocument();
+
+    // Change to The Clash
+    await user.selectOptions(layoutSelect, 'theClash');
+    expect(screen.queryByText('Goal')).not.toBeInTheDocument();
+
+    // Draw The Clash (3 cards)
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+    expect(screen.getByText('Alpha (Thesis)')).toBeInTheDocument();
+    expect(screen.getByText('Omega (Antithesis)')).toBeInTheDocument();
+    expect(screen.getByText('Synthesis (Outcome)')).toBeInTheDocument();
+  });
 });

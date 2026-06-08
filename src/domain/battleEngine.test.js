@@ -80,5 +80,46 @@ describe('battleEngine', () => {
       expect(result.p2Score).toBe(0);
       expect(result.logLine).toBe('> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.');
     });
+
+    describe('TCG Active Abilities', () => {
+      it('processes overdrive ability correctly in speedBlitz mode', () => {
+        const p1Overdrive = { ...p1, ability: 'overdrive' };
+        // speedBlitz: (ATK + SPD * 2) * Elemental Advantage
+        // p1 standard speedBlitz: (50 + 20 * 2) * 1.5 = 135
+        // p1 overdrive speedBlitz: ((50 + 10) + 20 * 2) * 1.5 = 150
+        const result = resolveBattleWithEngine(p1Overdrive, p2, 'speedBlitz');
+        expect(result.p1Score).toBe(150);
+
+        // standard mode: overdrive should not apply
+        const standardResult = resolveBattleWithEngine(p1Overdrive, p2, 'standard');
+        expect(standardResult.p1Score).toBe(105);
+      });
+
+      it('processes ironWall ability correctly in suddenDeath mode', () => {
+        const p1IronWall = { ...p1, ability: 'ironWall' };
+        // suddenDeath: (ATK * 3) with no elemental advantages
+        // p1 standard suddenDeath: (50 * 3) = 150
+        // p1 ironWall suddenDeath: (50 * 3) + 20 = 170
+        const result = resolveBattleWithEngine(p1IronWall, p2, 'suddenDeath');
+        expect(result.p1Score).toBe(170);
+
+        // standard mode: ironWall should not apply
+        const standardResult = resolveBattleWithEngine(p1IronWall, p2, 'standard');
+        expect(standardResult.p1Score).toBe(105);
+      });
+
+      it('processes voidShield ability correctly by ignoring elemental advantages', () => {
+        const p2VoidShield = { ...p2, ability: 'voidShield' };
+        // Fire (p1) usually has 1.5x advantage over Wind (p2)
+        // With voidShield on p2, p1's advantage is forced to 1.0x
+        // p1 score: (50 + 20) * 1.0 = 70
+        // p2 score: (40 + 30) * 1.0 = 70
+        const result = resolveBattleWithEngine(p1, p2VoidShield, 'standard');
+        expect(result.p1Advantage).toBe(1.0);
+        expect(result.p1Score).toBe(70);
+        expect(result.p2Score).toBe(70);
+        expect(result.winner).toBeNull(); // Draw due to equal scores
+      });
+    });
   });
 });
