@@ -76,4 +76,34 @@ describe('App', () => {
 
     expect(screen.getByText('T-Minus (Past)')).toBeInTheDocument();
   });
+
+  it('renders successfully when localStorage contains corrupted JSON', () => {
+    localStorage.setItem('aether-deck', '{"broken json that will never parse][');
+    render(<App />);
+    expect(screen.getByTestId('aether-root')).toBeInTheDocument();
+    expect(screen.getByTestId('aether-view-dex')).toBeInTheDocument();
+    // The corrupted value must be gone — either removed (null) or replaced with valid JSON by
+    // the persistence effect. Either way, the stored string must not be the corrupted payload.
+    const stored = localStorage.getItem('aether-deck');
+    if (stored !== null) {
+      expect(() => JSON.parse(stored)).not.toThrow();
+    }
+  });
+
+  it('forge compiles a card with a unique ID that does not collide with existing deck', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+    await user.click(screen.getByTestId('aether-forge-compile'));
+
+    const saved = localStorage.getItem('aether-deck');
+    const savedDeck = JSON.parse(saved);
+    const ids = savedDeck.map(c => c.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+
+    const forgedCard = savedDeck[savedDeck.length - 1];
+    expect(forgedCard.id).not.toBe('018');
+    expect(forgedCard.id).not.toBe('019');
+  });
 });
