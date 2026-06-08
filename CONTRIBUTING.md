@@ -1,6 +1,6 @@
-# Contributing to glitchhub-tarot (Aether Deck) 🔮
+# Contributing to glitchworks-tarot (Aether Deck) 🔮
 
-Welcome! **glitchhub-tarot** is a dark-mode glitch-art tarot / TCG deck experience — modular card views (Dex, Arena, Oracle, Forge), dynamic deck data, and optional Android packaging via Capacitor.
+Welcome! **glitchworks-tarot** is a dark-mode glitch-art tarot / TCG deck experience — modular card views (Dex, Arena, Oracle, Forge), dynamic deck data, and optional Android packaging via Capacitor.
 
 For a quick product overview, see [README.md](./README.md). For stable E2E/RTL selectors, see [docs/TESTIDS.md](./docs/TESTIDS.md).
 
@@ -40,7 +40,7 @@ linear/              # Linear integration config
 
 ## 🌌 1. The Prime Directive: Pure Code in Submodules, Guides in Superproject
 
-This repository (`glitchhub-tarot`) is tracked as a git submodule within parent environments (such as the `dev-master` monorepo). We enforce a strict boundary between parent workspaces and this upstream codebase.
+This repository (`glitchworks-tarot`) is tracked as a git submodule within parent environments (such as the `dev-master` monorepo). We enforce a strict boundary between parent workspaces and this upstream codebase.
 
 ### ⚠️ The Boundary Violation Rule
 
@@ -58,7 +58,7 @@ This repository (`glitchhub-tarot`) is tracked as a git submodule within parent 
 
 ## 🏛️ 2. GlitchWorks Agnostic Architecture Protocol
 
-Every feature, integration, or refactor in `glitchhub-tarot` must be designed as an agnostic data pipeline. Core deck/oracle logic must not assume a specific deployment context or direct parent monorepo coupling.
+Every feature, integration, or refactor in `glitchworks-tarot` must be designed as an agnostic data pipeline. Core deck/oracle logic must not assume a specific deployment context or direct parent monorepo coupling.
 
 ### 2.1. Zero Hardcoding (Dynamic State Configuration)
 
@@ -109,7 +109,7 @@ Ensure you have configured both your personal fork (`origin`) and the official u
 git remote -v
 
 # If upstream is missing, configure it
-git remote add upstream https://github.com/k-dot-greyz/glitchhub-tarot.git
+git remote add upstream https://github.com/k-dot-greyz/glitchworks-tarot.git
 ```
 
 ### Step 2: Checkout a Fresh Branch
@@ -172,10 +172,10 @@ git push -u origin HEAD
 
 ### Step 6: Create Your Pull Request
 
-Submit your PR to `k-dot-greyz/glitchhub-tarot` `main`:
+Submit your PR to `k-dot-greyz/glitchworks-tarot` `main`:
 
 ```bash
-gh pr create --repo k-dot-greyz/glitchhub-tarot --base main \
+gh pr create --repo k-dot-greyz/glitchworks-tarot --base main \
   --title "feat(oracle): short summary" \
   --body "$(cat <<'EOF'
 ## Summary
@@ -190,7 +190,7 @@ EOF
 )"
 ```
 
-> **Note:** If `origin` already points at `k-dot-greyz/glitchhub-tarot` (no personal fork), push your branch to `origin` and open the PR the same way.
+> **Note:** If `origin` already points at `k-dot-greyz/glitchworks-tarot` (no personal fork), push your branch to `origin` and open the PR the same way.
 
 ---
 
