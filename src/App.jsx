@@ -142,7 +142,10 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const saveForgeCard = () => {
     compileForgeCard(forgeData);
     setView('dex');
-    setForgeData({ ...forgeData, name: 'Next Entity' });
+    // Reset presentation-only overrides so they don't bleed into the next forge
+    // session. Other fields (type, stats, sub, etc.) are intentionally kept so
+    // forging multiple similar cards is faster.
+    setForgeData(prev => ({ ...prev, name: 'Next Entity', customImage: null, hideStats: false, hideDesc: false }));
   };
 
   // --- VIEWS ---
