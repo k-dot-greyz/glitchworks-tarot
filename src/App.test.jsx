@@ -90,6 +90,17 @@ describe('App', () => {
     }
   });
 
+  it('does not crash when localStorage is full (QuotaExceededError on setItem)', () => {
+    localStorage.setItem = vi.fn(() => {
+      const err = new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+      throw err;
+    });
+    // App must mount without throwing even when every persistence attempt fails
+    expect(() => render(<App />)).not.toThrow();
+    expect(screen.getByTestId('aether-root')).toBeInTheDocument();
+    expect(screen.getByTestId('aether-view-dex')).toBeInTheDocument();
+  });
+
   it('forge compiles a card with a unique ID that does not collide with existing deck', async () => {
     const user = userEvent.setup();
     render(<App />);

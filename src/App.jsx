@@ -252,9 +252,15 @@ export default function App() {
   });
   const [selectedCard, setSelectedCard] = useState(null);
   
-  // Persistence
+  // Persistence — guard against QuotaExceededError when forged cards carry large base64 images
   useEffect(() => {
-    localStorage.setItem('aether-deck', JSON.stringify(deck));
+    try {
+      localStorage.setItem('aether-deck', JSON.stringify(deck));
+    } catch (err) {
+      if (err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)) {
+        console.warn('[aether-deck] localStorage quota exceeded; deck changes will not persist across sessions.');
+      }
+    }
   }, [deck]);
 
   // Settings / Aesthetics State
@@ -358,7 +364,8 @@ export default function App() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForgeData({ ...forgeData, customImage: reader.result });
+        // Functional updater avoids stale-closure overwriting concurrent forge edits
+        setForgeData(prev => ({ ...prev, customImage: reader.result }));
       };
       reader.readAsDataURL(file);
     }
