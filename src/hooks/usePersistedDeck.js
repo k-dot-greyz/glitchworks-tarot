@@ -25,9 +25,13 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
   }, [deck, storage, telemetry]);
 
   const compileForgeCard = (forgeData) => {
-    const newCard = forgeCard(deck, forgeData);
-    setDeck(prevDeck => [...prevDeck, newCard]);
-    return newCard;
+    // ID must be derived from prevDeck (latest committed state) rather than the
+    // closed-over `deck` snapshot. Two rapid calls before a re-render would both
+    // read the same stale `deck` and generate the same ID, corrupting the deck.
+    setDeck(prevDeck => {
+      const newCard = forgeCard(prevDeck, forgeData);
+      return [...prevDeck, newCard];
+    });
   };
 
   return {
