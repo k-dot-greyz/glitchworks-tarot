@@ -146,8 +146,8 @@ describe('App', () => {
   });
 
   it('usePersistedDeck logs telemetry warning when storage.save reports quota failure', async () => {
-    const { createMemoryDeckStorage } = await import('./adapters/memoryDeckStorage.js');
-    const { createConsoleTelemetry } = await import('./adapters/consoleTelemetry.js');
+    const { createMemoryDeckStorage } =
+      await import('./adapters/memoryDeckStorage.js');
 
     const storage = createMemoryDeckStorage();
     const alwaysFailSave = {
@@ -164,6 +164,29 @@ describe('App', () => {
       'warn',
       'DECK_SAVE_QUOTA_EXCEEDED',
       expect.objectContaining({ error: expect.stringContaining('QuotaExceededError') })
+    );
+  });
+
+  it('Arena Mode Selector updates UI and disables combat when Combat Disabled is selected', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-arena'));
+
+    expect(screen.getByTestId('aether-arena-mode-select')).toBeInTheDocument();
+    expect(screen.getByTestId('aether-arena-log')).toHaveTextContent(
+      'WAITING FOR DATA INPUT',
+    );
+
+    // Select 'Combat Disabled' mode
+    const select = screen.getByTestId('aether-arena-mode-select');
+    await user.selectOptions(select, 'combatDisabled');
+
+    expect(screen.getByTestId('aether-arena-log')).toHaveTextContent(
+      'SYSTEMS IN HARMONY. NO CLASH POSSIBLE.',
+    );
+    expect(screen.getByTestId('aether-arena-clash')).toBeDisabled();
+    expect(screen.getByTestId('aether-arena-clash')).toHaveTextContent(
+      'COMBAT DISABLED',
     );
   });
 });
