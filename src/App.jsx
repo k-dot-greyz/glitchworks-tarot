@@ -344,7 +344,11 @@ export default function App() {
   };
 
   const drawSpread = () => {
-    const shuffled = [...deck].sort(() => 0.5 - Math.random());
+    const shuffled = [...deck];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     setSpread(shuffled.slice(0, 3));
   };
 
@@ -353,7 +357,7 @@ export default function App() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForgeData({ ...forgeData, customImage: reader.result });
+        setForgeData(prev => ({ ...prev, customImage: reader.result }));
       };
       reader.readAsDataURL(file);
     }
