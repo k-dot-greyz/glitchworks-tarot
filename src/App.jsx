@@ -132,7 +132,13 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
 
   const handleDrawSpread = () => {
     const cardCount = oracleLayout === 'celticCross' ? 5 : 3;
-    setSpread(drawSpread(deck, cardCount));
+    const drawn = drawSpread(deck, cardCount);
+    // Celtic Cross needs 5 distinct positions; if the deck is smaller than required
+    // drawSpread returns fewer cards and the renderer would dereference undefined slots.
+    if (drawn.length < cardCount) {
+      return; // keep spread empty — placeholder stays shown
+    }
+    setSpread(drawn);
   };
 
   const handleImageUpload = (e) => {
@@ -149,7 +155,19 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const saveForgeCard = () => {
     compileForgeCard(forgeData);
     setView('dex');
-    setForgeData({ ...forgeData, name: 'Next Entity' });
+    // Use functional updater to avoid stale closure, and reset all cosmetic/override
+    // fields so they don't leak into the next forge session.
+    setForgeData(prev => ({
+      ...prev,
+      name: 'Next Entity',
+      customImage: null,
+      hideStats: false,
+      hideDesc: false,
+      frame: 'standard',
+      hat: 'none',
+      rarity: 'common',
+      ability: 'none',
+    }));
   };
 
   // --- VIEWS ---

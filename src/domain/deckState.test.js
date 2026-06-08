@@ -65,4 +65,15 @@ describe('deckState', () => {
     expect(drawSpread([])).toEqual([]);
     expect(drawSpread(null)).toEqual([]);
   });
+
+  it('drawSpread respects explicit count and caps at deck.length without crashing', () => {
+    const twoCardDeck = [
+      { id: '001', name: 'Alpha', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: '002', name: 'Beta', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+    ];
+    // count < deck.length — slices correctly
+    expect(drawSpread(twoCardDeck, 1, () => 0.5).length).toBe(1);
+    // count > deck.length — returns at most deck.length cards (never undefined slots)
+    expect(drawSpread(twoCardDeck, 5, () => 0.5).length).toBe(2);
+  });
 });

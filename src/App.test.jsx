@@ -268,4 +268,53 @@ describe('App', () => {
     expect(screen.getByText('Omega (Antithesis)')).toBeInTheDocument();
     expect(screen.getByText('Synthesis (Outcome)')).toBeInTheDocument();
   });
+
+  it('Celtic Cross draw does not crash or render card slots when deck has fewer than 5 cards', async () => {
+    const { createMemoryDeckStorage } = await import('./adapters/memoryDeckStorage.js');
+    // A 3-card deck — smaller than the 5 positions Celtic Cross requires
+    const tinyDeck = [
+      { id: '001', name: 'Tiny1', sub: '', type: 'void', stats: { atk: 10, def: 10, spd: 10 }, desc: '' },
+      { id: '002', name: 'Tiny2', sub: '', type: 'fire', stats: { atk: 10, def: 10, spd: 10 }, desc: '' },
+      { id: '003', name: 'Tiny3', sub: '', type: 'water', stats: { atk: 10, def: 10, spd: 10 }, desc: '' },
+    ];
+    const storage = createMemoryDeckStorage({ 'aether-deck': JSON.stringify(tinyDeck) });
+    const user = userEvent.setup();
+    render(<App storage={storage} telemetry={{ log: vi.fn() }} />);
+
+    await user.click(screen.getByTestId('aether-nav-oracle'));
+    await user.selectOptions(screen.getByTestId('aether-oracle-layout-select'), 'celticCross');
+
+    // Must not throw TypeError accessing spread[4] on a 3-card draw result
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+
+    // Spread stays empty (placeholder shown); Celtic Cross slot labels must not appear
+    expect(screen.getByTestId('aether-view-oracle')).toBeInTheDocument();
+    expect(screen.queryByText('Future')).not.toBeInTheDocument();
+    expect(screen.queryByText('Past')).not.toBeInTheDocument();
+  });
+
+  it('saveForgeCard resets all cosmetic fields to defaults after compile', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // Set non-default cosmetics on the card-in-progress
+    await user.selectOptions(screen.getByTestId('aether-forge-frame'), 'goldFoil');
+    await user.selectOptions(screen.getByTestId('aether-forge-hat'), 'cyberCrown');
+    await user.selectOptions(screen.getByTestId('aether-forge-rarity'), 'ultra-rare');
+    await user.selectOptions(screen.getByTestId('aether-forge-ability'), 'overdrive');
+
+    // Compile the card (navigates to dex)
+    await user.click(screen.getByTestId('aether-forge-compile'));
+
+    // Navigate back to the Forge for the next card
+    await user.click(screen.getByTestId('aether-nav-forge'));
+
+    // All cosmetic override fields must be reset — none of the previous card's settings
+    // should leak into the new forge session
+    expect(screen.getByTestId('aether-forge-frame').value).toBe('standard');
+    expect(screen.getByTestId('aether-forge-hat').value).toBe('none');
+    expect(screen.getByTestId('aether-forge-rarity').value).toBe('common');
+    expect(screen.getByTestId('aether-forge-ability').value).toBe('none');
+  });
 });
