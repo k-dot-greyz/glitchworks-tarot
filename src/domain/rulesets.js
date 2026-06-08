@@ -2,6 +2,7 @@
 // This module defines the schemas, layouts, restrictions, and formulas for TCG playmats.
 // It is fully serializable and design-agnostic.
 
+// Serializable ruleset definitions (no runtime functions)
 export const rulesets = {
   standard: {
     id: 'standard',
@@ -15,9 +16,7 @@ export const rulesets = {
     bannedCardIds: [],
     restrictedCardIds: [],
     maxDeckSize: 60,
-    calculateScore: (card) => {
-      return card.stats.atk + card.stats.spd;
-    }
+    scoreFormula: 'standard_atk_spd'
   },
   mtg: {
     id: 'mtg',
@@ -39,10 +38,7 @@ export const rulesets = {
     bannedCardIds: ['001'], // Example banned card
     restrictedCardIds: [],
     maxDeckSize: 100,
-    calculateScore: (card) => {
-      // MTG: Power (ATK) + Toughness (DEF)
-      return card.stats.atk + card.stats.def;
-    }
+    scoreFormula: 'mtg_power_toughness'
   },
   yugioh: {
     id: 'yugioh',
@@ -63,10 +59,7 @@ export const rulesets = {
     bannedCardIds: [],
     restrictedCardIds: [],
     maxDeckSize: 60,
-    calculateScore: (card) => {
-      // Yu-Gi-Oh: ATK * 2
-      return card.stats.atk * 2;
-    }
+    scoreFormula: 'yugioh_atk_x2'
   },
   pokemon: {
     id: 'pokemon',
@@ -86,9 +79,25 @@ export const rulesets = {
     bannedCardIds: [],
     restrictedCardIds: [],
     maxDeckSize: 60,
-    calculateScore: (card) => {
-      // Pokemon: ATK + SPD
-      return card.stats.atk + card.stats.spd;
-    }
+    scoreFormula: 'pokemon_atk_spd'
+  }
+};
+
+// Score formula registry: maps formula keys to actual functions
+export const scoreFormulaRegistry = {
+  'standard_atk_spd': (card) => {
+    return card.stats.atk + card.stats.spd;
+  },
+  'mtg_power_toughness': (card) => {
+    // MTG: Power (ATK) + Toughness (DEF)
+    return card.stats.atk + card.stats.def;
+  },
+  'yugioh_atk_x2': (card) => {
+    // Yu-Gi-Oh: ATK * 2
+    return card.stats.atk * 2;
+  },
+  'pokemon_atk_spd': (card) => {
+    // Pokemon: ATK + SPD
+    return card.stats.atk + card.stats.spd;
   }
 };
