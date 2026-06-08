@@ -40,4 +40,29 @@ describe('deckState', () => {
     const spread = drawSpread(deckWithMany, () => 0.5);
     expect(spread.length).toBe(3);
   });
+
+  it('drawSpread produces uniform distribution via Fisher-Yates (not biased sort)', () => {
+    // With a 4-card deck and rng=()=>0.42, Fisher-Yates produces a deterministic result.
+    // Biased sort would produce a different (implementation-dependent) order.
+    const fourCardDeck = [
+      { id: '001', name: 'Alpha', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: '002', name: 'Beta', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: '003', name: 'Gamma', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: '004', name: 'Delta', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+    ];
+    // Fisher-Yates with rng=()=>0.42 and deck [A,B,C,D]:
+    //   i=3: j=floor(0.42*4)=1, swap idx3<->idx1 → [A, D, C, B]
+    //   i=2: j=floor(0.42*3)=1, swap idx2<->idx1 → [A, C, D, B]
+    //   i=1: j=floor(0.42*2)=0, swap idx1<->idx0 → [C, A, D, B]
+    //   slice(0,3) = [Gamma, Alpha, Delta]
+    const spread = drawSpread(fourCardDeck, () => 0.42);
+    expect(spread[0].name).toBe('Gamma');
+    expect(spread[1].name).toBe('Alpha');
+    expect(spread[2].name).toBe('Delta');
+  });
+
+  it('drawSpread returns empty array for empty deck', () => {
+    expect(drawSpread([])).toEqual([]);
+    expect(drawSpread(null)).toEqual([]);
+  });
 });
