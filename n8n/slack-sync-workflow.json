@@ -13,7 +13,7 @@
     },
     {
       "parameters": {
-        "channel": "glitchhub-tarot-notifications",
+        "channel": "glitchworks-tarot-notifications",
         "text": "New Linear update: {{$json[\"title\"]}} ({{$json[\"state\"]}})",
         "attachments": [
           {
@@ -42,4 +42,3 @@
     }
   }
 }
-

@@ -63,7 +63,7 @@ jobs:
 
   deploy:
     needs: [build, e2e]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.DEPLOY_HOST != ''
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -84,6 +84,7 @@ jobs:
         run: |
           rsync -av --delete build/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
       - name: Notify Linear
+        if: secrets.LINEAR_API_KEY != ''
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \

@@ -2,7 +2,7 @@
 
 set -e
 
-echo "Starting MCP Server for GLITCHHUB_TAROT..."
+echo "Starting MCP Server for GLITCHWORKS_TAROT..."
 
 CONFIG_FILE="./server-config.yaml"
 CHUNKER="../context-chunks/chunking.js"
@@ -15,5 +15,4 @@ node mcp-server.js \
   --chunker "$CHUNKER" \
   --indexer "$INDEXER"
 
-echo "MCP Server started. Check logs at /var/log/glitchhub_tarot_mcp.log"
-
+echo "MCP Server started. Check logs at /var/log/glitchworks_tarot_mcp.log"
