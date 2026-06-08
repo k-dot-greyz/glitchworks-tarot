@@ -73,15 +73,37 @@ export function resolveBattleWithEngine(p1, p2, modeId = 'standard') {
 
   const mode = arenaModes[modeId] || arenaModes.standard;
 
-  // 1. Resolve Base Score
+  // 1. Resolve Base Score with Ability modifiers
   const baseModifier = mode.modifiers.find(m => m.applyBase);
-  const p1Base = baseModifier ? baseModifier.applyBase(p1) : baseScoreComponent.calculate(p1);
-  const p2Base = baseModifier ? baseModifier.applyBase(p2) : baseScoreComponent.calculate(p2);
+  
+  // Apply Overdrive ability (+10 ATK in Speed Blitz)
+  const p1Stats = { ...p1.stats };
+  const p2Stats = { ...p2.stats };
+  if (p1.ability === 'overdrive' && modeId === 'speedBlitz') p1Stats.atk += 10;
+  if (p2.ability === 'overdrive' && modeId === 'speedBlitz') p2Stats.atk += 10;
 
-  // 2. Resolve Elemental Multiplier
+  const p1Modified = { ...p1, stats: p1Stats };
+  const p2Modified = { ...p2, stats: p2Stats };
+
+  let p1Base = baseModifier ? baseModifier.applyBase(p1Modified) : baseScoreComponent.calculate(p1Modified);
+  let p2Base = baseModifier ? baseModifier.applyBase(p2Modified) : baseScoreComponent.calculate(p2Modified);
+
+  // Apply Iron Wall ability (+20 base score in Sudden Death)
+  if (p1.ability === 'ironWall' && modeId === 'suddenDeath') p1Base += 20;
+  if (p2.ability === 'ironWall' && modeId === 'suddenDeath') p2Base += 20;
+
+  // 2. Resolve Elemental Multiplier with Ability modifiers
   const elementalModifier = mode.modifiers.find(m => m.applyElemental);
-  const p1Adv = elementalModifier ? elementalModifier.applyElemental(p1, p2) : elementalComponent.calculate(p1, p2);
-  const p2Adv = elementalModifier ? elementalModifier.applyElemental(p2, p1) : elementalComponent.calculate(p2, p1);
+  let p1Adv = elementalModifier ? elementalModifier.applyElemental(p1, p2) : elementalComponent.calculate(p1, p2);
+  let p2Adv = elementalModifier ? elementalModifier.applyElemental(p2, p1) : elementalComponent.calculate(p2, p1);
+
+  // Apply Void Shield ability (ignores elemental advantages)
+  if (p2.ability === 'voidShield') {
+    p1Adv = 1.0;
+  }
+  if (p1.ability === 'voidShield') {
+    p2Adv = 1.0;
+  }
 
   // 3. Aggregate Scores
   const p1Score = p1Base * p1Adv;

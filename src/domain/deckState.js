@@ -23,12 +23,22 @@ export function forgeCard(deck, forgeData) {
   return { ...forgeData, id: newId };
 }
 
-export function drawSpread(deck, rng = Math.random) {
+export function drawSpread(deck, countOrRng = 3, rng = Math.random) {
   if (!Array.isArray(deck) || deck.length === 0) return [];
+
+  let count = 3;
+  let activeRng = rng;
+
+  if (typeof countOrRng === 'function') {
+    activeRng = countOrRng;
+  } else if (typeof countOrRng === 'number') {
+    count = countOrRng;
+  }
+
   const shuffled = [...deck];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
+    const j = Math.floor(activeRng() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return shuffled.slice(0, 3);
+  return shuffled.slice(0, count);
 }
