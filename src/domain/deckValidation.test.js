@@ -54,4 +54,33 @@ describe('deckValidation', () => {
     expect(result.code).toBe('INVALID_SCHEMA');
     expect(telemetry.log).toHaveBeenCalledWith('warn', 'DECK_VALIDATION_FAILED', expect.any(Object));
   });
+
+  it('parseStoredDeck rejects empty raw input without parsing', () => {
+    const result = parseStoredDeck('');
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe('EMPTY');
+  });
+
+  it('validateCard rejects NaN and non-numeric stat payloads', () => {
+    expect(validateCard({ ...validCard, stats: { atk: NaN, def: 50, spd: 50 } })).toBe(false);
+    expect(validateCard({ ...validCard, stats: { atk: '50', def: 50, spd: 50 } })).toBe(false);
+  });
+
+  it('validateCard rejects missing desc and type fields', () => {
+    const noDesc = { ...validCard };
+    delete noDesc.desc;
+    expect(validateCard(noDesc)).toBe(false);
+    expect(validateCard({ ...validCard, type: '  ' })).toBe(false);
+    expect(validateCard({ ...validCard, sub: 123 })).toBe(false);
+  });
+
+  it('parseStoredDeck accepts large deck arrays when schema-valid', () => {
+    const oversized = Array.from({ length: 500 }, (_, i) => ({
+      ...validCard,
+      id: String(i).padStart(3, '0'),
+    }));
+    const result = parseStoredDeck(JSON.stringify(oversized));
+    expect(result.ok).toBe(true);
+    expect(result.value).toHaveLength(500);
+  });
 });
