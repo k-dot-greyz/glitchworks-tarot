@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Dark mode glitch art tarot card generator - dev-master setup",
   "main": "src/main.jsx",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -22,21 +25,21 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
     "lucide-react": "^0.577.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.0.0",
     "@commitlint/config-conventional": "^18.0.0",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.27",
     "eslint": "^10.0.3",
     "eslint-plugin-react": "^7.37.5",
@@ -47,7 +50,7 @@
     "jsdom": "^29.0.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.2.2",
-    "vite": "^8.0.16",
-    "vitest": "^4.1.0"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.10"
   }
 }
