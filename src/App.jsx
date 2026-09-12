@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import INITIAL_DECK from './dynamic_deck.json';
+import INITIAL_DECK from './default_deck.json';
 import {
   Sword,
   Eye,
@@ -143,7 +143,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
     if (isClashing) return;
     const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
     const clashSlots = activeRuleset.clashSlots;
-    
+
     // Find the first empty clash slot
     const emptySlot = clashSlots.find(slotId => !arenaSlots[slotId]);
     if (emptySlot) {
@@ -230,7 +230,17 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const saveForgeCard = () => {
     compileForgeCard(forgeData);
     setView('dex');
-    setForgeData({ ...forgeData, name: 'Next Entity' });
+    setForgeData((prev) => ({
+      ...prev,
+      name: 'Next Entity',
+      customImage: null,
+      hideStats: false,
+      hideDesc: false,
+      frame: 'standard',
+      hat: 'none',
+      rarity: 'common',
+      ability: 'none',
+    }));
   };
 
   // --- VIEWS ---

@@ -24,7 +24,7 @@ For a quick product overview, see [README.md](./README.md). For stable E2E/RTL s
 ### Layout
 
 ```
-src/                 # React app (App.jsx, dynamic_deck.json, styles)
+src/                 # React app (App.jsx, default_deck.json, styles)
 e2e/                 # Playwright specs (production-like preview server)
 docs/                # Product docs (TESTIDS.md, AETHER_RAM.ipynb)
 android/             # Capacitor Android project (Gradle)
@@ -63,7 +63,7 @@ Every feature, integration, or refactor in `glitchworks-tarot` must be designed 
 ### 2.1. Zero Hardcoding (Dynamic State Configuration)
 
 * **Rule**: No magic strings, static network ports, or fixed directory paths in domain logic.
-* **Application**: Vite dev/preview ports, Capacitor `webDir`, and external API endpoints (e.g., Last.fm stats injection) belong in config, env, or injected options — not scattered literals in components. Playwright uses `baseURL` from `playwright.config.ts`; override via env only at the test harness edge.
+* **Application**: Vite dev/preview ports, Capacitor `webDir`, and external API endpoints (e.g., optional validated custom deck JSON injection) belong in config, env, or injected options — not scattered literals in components. Playwright uses `baseURL` from `playwright.config.ts`; override via env only at the test harness edge.
 
 ### 2.2. Polymorphism by Default (Interface-Driven Contracts)
 
@@ -78,7 +78,7 @@ Every feature, integration, or refactor in `glitchworks-tarot` must be designed 
 ### 2.4. Boundary Validation (The "Hostile Edge")
 
 * **Rule**: Never trust incoming payloads. Protect core application state with a rigorous validation layer.
-* **Application**: Validate imported deck JSON, uploaded card packs, and external API responses before merging into `dynamic_deck.json` or in-memory deck state. Malformed input should surface a typed error in the UI, not a white screen.
+* **Application**: Validate imported deck JSON, uploaded card packs, and external API responses before merging into `default_deck.json` or in-memory deck state. Malformed input should surface a typed error in the UI, not a white screen.
 
 ### 2.5. State Hydration & Dehydration
 
