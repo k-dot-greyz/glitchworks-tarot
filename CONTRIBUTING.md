@@ -24,7 +24,10 @@ For a quick product overview, see [README.md](./README.md). For stable E2E/RTL s
 ### Layout
 
 ```
-src/                 # React app (App.jsx, default_deck.json, styles)
+src/                 # React app (orchestrator + Aether Deck library, default_deck.json)
+src/components/      # Aether Deck component library (Dex, Arena, Oracle, Forge, chrome)
+src/theme/           # Dark-mode glitch-art theme tokens and overlays
+src/domain/          # Deck, oracle, arena, and forge logic
 e2e/                 # Playwright specs (production-like preview server)
 docs/                # Product docs (TESTIDS.md, AETHER_RAM.ipynb)
 android/             # Capacitor Android project (Gradle)
