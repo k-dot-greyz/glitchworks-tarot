@@ -12,7 +12,7 @@
 | **Legacy `aether-deck` key** | Migration path | Stale/malformed single-deck blob | `usePersistedDeck.test.js` |
 | **Deck import JSON** | `parseStoredDeck` | Parse errors, schema bypass, type coercion | `deckValidation.test.js` |
 | **Runtime deck mutation** | `setDeck` | Invalid card injection into active state | `usePersistedDeck.test.js` |
-| **Arena card assignment** | Click + drag-drop | Banned card bypass | `App.test.jsx`, `e2e/arena-rulesets.spec.ts` |
+| **Arena card assignment** | Click (drag-drop deferred) | Banned card bypass | `App.test.jsx`, `e2e/arena-rulesets.spec.ts` |
 | **Ruleset selector** | UI / agent-injected ID | Unknown ruleset ID → scoring drift | `battleEngine.test.js`, `rulesets.test.js` |
 | **Battle resolution** | `resolveBattleWithEngine` | Mode/ruleset confusion, incomplete fighters | `battleEngine.test.js` |
 

@@ -49,11 +49,18 @@ test.describe('Arena — rulesets and hostile edge UX', () => {
   });
 
   test('switching ruleset clears in-progress slot assignments', async ({ page }) => {
+    const clash = page.getByTestId('aether-arena-clash');
     await page.getByText('The Fool').click();
-    await expect(page.getByTestId('aether-arena-log')).toContainText('FILLED');
+    await page.getByText('High Priestess').click();
+    await expect(clash).toBeEnabled();
 
     await page.getByTestId('aether-arena-ruleset-select').selectOption('yugioh');
-    await expect(page.getByTestId('aether-arena-clash')).toBeDisabled();
+    await expect(clash).toBeDisabled();
+
+    // Round-trip back to standard: clash slots overlap with the original
+    // assignment, so this fails if the reset effect is removed.
+    await page.getByTestId('aether-arena-ruleset-select').selectOption('standard');
+    await expect(clash).toBeDisabled();
   });
 
   test('no console errors during ruleset navigation', async ({ page }) => {

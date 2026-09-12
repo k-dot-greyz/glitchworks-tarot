@@ -84,6 +84,9 @@ describe('usePersistedDeck — hostile edge / persistence boundary', () => {
   });
 
   it('does not pollute Object.prototype from JSON storage payloads', () => {
+    // Object-literal `__proto__` is a setter, so JSON.stringify would drop it.
+    // Inject the key as raw JSON so the load path actually sees the payload.
+    const card = new CardFixture({ id: '099', name: 'Proto' }).build();
     const polluted = JSON.stringify({
       activeDeckId: 'default',
       decks: [
@@ -91,16 +94,18 @@ describe('usePersistedDeck — hostile edge / persistence boundary', () => {
           id: 'default',
           name: 'Polluted',
           deckBack: 'standard',
-          cards: [new CardFixture({ id: '099', name: 'Proto' }).build()],
+          cards: [card],
         },
       ],
-      __proto__: { polluted: true },
-    });
+    }).replace(/^{/, '{"__proto__":{"polluted":true},');
+
+    expect(polluted).toContain('"__proto__"');
 
     const storage = createMemoryDeckStorage({ 'aether-decks': polluted });
     renderHook(() => usePersistedDeck(storage, null, fallbackDeck));
 
     expect(Object.prototype.polluted).toBeUndefined();
+    expect({}.polluted).toBeUndefined();
   });
 
   it('migrates legacy single-deck storage when aether-decks is absent', () => {
