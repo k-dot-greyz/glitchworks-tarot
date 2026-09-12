@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import App from './App.jsx';
@@ -357,6 +357,32 @@ describe('App', () => {
     expect(screen.getByText('P1 Bench')).toBeInTheDocument();
     expect(screen.getByText('P1 Prizes')).toBeInTheDocument();
     expect(screen.getByText('P1 Discard Pile')).toBeInTheDocument();
+  });
+
+  it('loads canonical default deck cards without external stats overlay', () => {
+    render(<App />);
+    expect(screen.getByText('The Fool')).toBeInTheDocument();
+    expect(screen.getByText('The Glitch')).toBeInTheDocument();
+    expect(screen.queryByText(/lastfm|scrobble|playcount/i)).not.toBeInTheDocument();
+  });
+
+  it('resolves arena clash when both standard slots are filled', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('aether-nav-arena'));
+    fireEvent.click(screen.getByText('The Fool'));
+    fireEvent.click(screen.getByText('The Magician'));
+
+    const clash = screen.getByTestId('aether-arena-clash');
+    expect(clash).not.toBeDisabled();
+    fireEvent.click(clash);
+
+    await waitFor(
+      () => {
+        const log = screen.getByTestId('aether-arena-log').textContent;
+        expect(log).toMatch(/OVERWRITES|EQUILIBRIUM/);
+      },
+      { timeout: 2000 },
+    );
   });
 
   it('validates banlist at the boundary in the Arena view', async () => {

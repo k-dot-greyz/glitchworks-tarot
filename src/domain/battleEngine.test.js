@@ -121,5 +121,45 @@ describe('battleEngine', () => {
         expect(result.winner).toBeNull(); // Draw due to equal scores
       });
     });
+
+    describe('TCG ruleset scoring', () => {
+      it('mtg ruleset uses ATK + DEF base with elemental multiplier', () => {
+        // p1 base: 50 + 30 = 80, adv 1.5 → 120
+        // p2 base: 40 + 40 = 80, adv 1.0 → 80
+        const result = resolveBattleWithEngine(p1, p2, 'standard', 'mtg');
+        expect(result.p1Score).toBe(120);
+        expect(result.p2Score).toBe(80);
+        expect(result.winner).toBe('p1');
+      });
+
+      it('yugioh ruleset doubles ATK in base score', () => {
+        // p1 base: 50 * 2 = 100, adv 1.5 → 150
+        // p2 base: 40 * 2 = 80, adv 1.0 → 80
+        const result = resolveBattleWithEngine(p1, p2, 'standard', 'yugioh');
+        expect(result.p1Score).toBe(150);
+        expect(result.p2Score).toBe(80);
+        expect(result.winner).toBe('p1');
+      });
+
+      it('pokemon ruleset uses ATK + SPD like standard scoring path', () => {
+        const result = resolveBattleWithEngine(p1, p2, 'standard', 'pokemon');
+        expect(result.p1Score).toBe(105);
+        expect(result.p2Score).toBe(70);
+      });
+
+      it('unknown ruleset id falls back to standard arena scoring', () => {
+        const standard = resolveBattleWithEngine(p1, p2, 'standard', 'standard');
+        const unknown = resolveBattleWithEngine(p1, p2, 'standard', 'agent-injected-ruleset');
+        expect(unknown.p1Score).toBe(standard.p1Score);
+        expect(unknown.p2Score).toBe(standard.p2Score);
+      });
+
+      it('non-standard ruleset bypasses speedBlitz mode modifiers for base score', () => {
+        const speedBlitzStandard = resolveBattleWithEngine(p1, p2, 'speedBlitz', 'standard');
+        const speedBlitzMtg = resolveBattleWithEngine(p1, p2, 'speedBlitz', 'mtg');
+        expect(speedBlitzMtg.p1Score).not.toBe(speedBlitzStandard.p1Score);
+        expect(speedBlitzMtg.p1Score).toBe(120);
+      });
+    });
   });
 });
