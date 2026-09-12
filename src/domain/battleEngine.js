@@ -1,5 +1,5 @@
 import { ELEMENTAL_ADVANTAGE } from './elemental.js';
-import { rulesets } from './rulesets.js';
+import { rulesets, scoreFormulaRegistry } from './rulesets.js';
 
 export const baseScoreComponent = {
   id: 'baseScore',
@@ -87,16 +87,25 @@ export function resolveBattleWithEngine(p1, p2, modeId = 'standard', rulesetId =
   const p1Modified = { ...p1, stats: p1Stats };
   const p2Modified = { ...p2, stats: p2Stats };
 
-  // Use custom ruleset calculation if defined, otherwise fall back to standard/mode modifiers
+  // Compute base scores: use baseModifier if available, otherwise use base score component
   let p1Base;
   let p2Base;
 
-  if (activeRuleset && activeRuleset.id !== 'standard') {
-    p1Base = activeRuleset.calculateScore(p1Modified, p2Modified);
-    p2Base = activeRuleset.calculateScore(p2Modified, p1Modified);
+  if (baseModifier) {
+    p1Base = baseModifier.applyBase(p1Modified);
+    p2Base = baseModifier.applyBase(p2Modified);
   } else {
-    p1Base = baseModifier ? baseModifier.applyBase(p1Modified) : baseScoreComponent.calculate(p1Modified);
-    p2Base = baseModifier ? baseModifier.applyBase(p2Modified) : baseScoreComponent.calculate(p2Modified);
+    p1Base = baseScoreComponent.calculate(p1Modified);
+    p2Base = baseScoreComponent.calculate(p2Modified);
+  }
+
+  // Apply custom ruleset calculation if defined for non-standard rulesets
+  if (activeRuleset && activeRuleset.id !== 'standard' && activeRuleset.scoreFormula) {
+    const scoreFunc = scoreFormulaRegistry[activeRuleset.scoreFormula];
+    if (scoreFunc) {
+      p1Base = scoreFunc(p1Modified, p2Modified);
+      p2Base = scoreFunc(p2Modified, p1Modified);
+    }
   }
 
   // Apply Iron Wall ability (+20 base score in Sudden Death)
