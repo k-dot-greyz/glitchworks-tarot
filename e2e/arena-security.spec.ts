@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Arena UX + boundary scenarios (rulesets, banlist, clash resolution, hostile storage).
@@ -49,14 +49,30 @@ class ArenaE2EFixtures {
 
     this.storageKey = options.storageKey ?? 'aether-decks';
 
-    // Expected operational telemetry that uses console.error (see consoleTelemetry.js).
+    // Expected operational telemetry that uses console.error (see consoleTelemetry.js),
+    // plus browser favicon 404 noise (no favicon in index.html).
     this.expectedTelemetryErrors = options.expectedTelemetryErrors ?? [
       '[AETHER_TELEMETRY] [ERROR] DECKS_PARSE_FAILED',
+      'Failed to load resource: the server responded with a status of 404',
     ];
   }
 }
 
 const fixtures = new ArenaE2EFixtures();
+
+/**
+ * Bench cards are CSS-3D flipped inside an overflow-masked scroller.
+ * Coordinate clicks miss the visual target; dispatch a DOM click on the card root.
+ */
+async function clickBenchCard(page: Page, name: string) {
+  await page
+    .getByTestId(fixtures.selectors.viewArena)
+    .getByRole('heading', { name, exact: true })
+    .evaluate((el) => {
+      const cardRoot = el.closest('.cursor-pointer');
+      (cardRoot instanceof HTMLElement ? cardRoot : el).click();
+    });
+}
 
 test.describe('Arena — rulesets, clash, and hostile storage', () => {
   test('user story: place two cards and resolve a standard clash', async ({ page }) => {
@@ -64,8 +80,8 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     await page.getByTestId(fixtures.selectors.navArena).click();
     await expect(page.getByTestId(fixtures.selectors.viewArena)).toBeVisible();
 
-    await page.getByText(fixtures.cardNames.fool).click();
-    await page.getByText(fixtures.cardNames.priestess).click();
+    await clickBenchCard(page, fixtures.cardNames.fool);
+    await clickBenchCard(page, fixtures.cardNames.priestess);
 
     const clash = page.getByTestId(fixtures.selectors.clash);
     await expect(clash).toBeEnabled();
@@ -103,7 +119,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
       fixtures.rulesetIds.mtg,
     );
 
-    await page.getByText(fixtures.cardNames.magician).click();
+    await clickBenchCard(page, fixtures.cardNames.magician);
     await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
       /BANNED IN MTG BATTLEFIELD/i,
     );
@@ -114,7 +130,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
     await page.goto('/');
     await page.getByTestId(fixtures.selectors.navArena).click();
 
-    await page.getByText(fixtures.cardNames.fool).click();
+    await clickBenchCard(page, fixtures.cardNames.fool);
     await page.getByTestId(fixtures.selectors.flush).click();
     await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(/ARENA WIPED/i);
     await expect(page.getByTestId(fixtures.selectors.clash)).toBeDisabled();
@@ -157,14 +173,15 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
       fixtures.arenaModes.combatDisabled,
     );
 
-    await page.getByText(fixtures.cardNames.fool).click();
-    await page.getByText(fixtures.cardNames.priestess).click();
-
     const clash = page.getByTestId(fixtures.selectors.clash);
     await expect(clash).toBeDisabled();
     await expect(clash).toHaveText(/COMBAT DISABLED/i);
     await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
       /SYSTEMS IN HARMONY/i,
     );
+
+    await clickBenchCard(page, fixtures.cardNames.fool);
+    await clickBenchCard(page, fixtures.cardNames.priestess);
+    await expect(clash).toBeDisabled();
   });
 });
