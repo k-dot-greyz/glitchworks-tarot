@@ -10,6 +10,7 @@ class ArenaE2EFixtures {
   readonly rulesetIds;
   readonly arenaModes;
   readonly storageKey;
+  readonly expectedTelemetryErrors;
 
   constructor(options: {
     selectors?: Record<string, string>;
@@ -17,6 +18,7 @@ class ArenaE2EFixtures {
     rulesetIds?: Record<string, string>;
     arenaModes?: Record<string, string>;
     storageKey?: string;
+    expectedTelemetryErrors?: string[];
   } = {}) {
     this.selectors = {
       root: options.selectors?.root ?? 'aether-root',
@@ -46,6 +48,11 @@ class ArenaE2EFixtures {
     };
 
     this.storageKey = options.storageKey ?? 'aether-decks';
+
+    // Expected operational telemetry that uses console.error (see consoleTelemetry.js).
+    this.expectedTelemetryErrors = options.expectedTelemetryErrors ?? [
+      '[AETHER_TELEMETRY] [ERROR] DECKS_PARSE_FAILED',
+    ];
   }
 }
 
@@ -133,7 +140,14 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
       }, stored);
     }
 
-    expect(errors, `console errors: ${errors.join('\n')}`).toHaveLength(0);
+    const unexpected = errors.filter(
+      (text) =>
+        !fixtures.expectedTelemetryErrors.some((allowed) => text.includes(allowed)),
+    );
+    expect(
+      unexpected,
+      `unexpected console errors: ${unexpected.join('\n')}`,
+    ).toHaveLength(0);
   });
 
   test('combat disabled mode keeps clash button inert', async ({ page }) => {
