@@ -1,5 +1,66 @@
 # Test coverage decision log — agentic security pass
 
+## 2026-09-12 — Component library extraction (PR #33)
+
+**Branch:** `greyzxcursor/agentic-security-test-coverage-b2b3`  
+**Trigger context:** PR #33 (`greyzxcursor/aether-deck-component-library-3b2f`) — Aether Deck views extracted to `src/components/`  
+**Date:** 2026-09-12
+
+### Attack surface reviewed
+
+| Surface | Risk | Mitigation tested |
+|---------|------|-------------------|
+| Extracted `Card` / `CardModal` | Stored XSS via card name, sub, desc | RTL hostile strings render as text; no `<script>` nodes |
+| `DexView` deck selector | Hostile deck names in `<option>` | RTL uppercase label renders escaped |
+| `ForgeView` controlled inputs | Agentic forge strings in compile path | RTL input values + E2E compile with hostile name |
+| `OracleView` layout + drop | Unknown layout crash; forged `cardId` drag payload | RTL agentic layout survives; drop forwards payload; App ignores unknown ids |
+| `default_deck.json` | Shipped deck drift / duplicate ids | Vitest schema + uniqueness guards |
+| Component shell markers | Regression on library extraction | E2E `data-aether-ui="main"` + theme attrs |
+
+### Prioritization (impact vs cost)
+
+| Added coverage | Impact | Cost | Speed |
+|----------------|--------|------|-------|
+| `ComponentLibraryHarness` | Medium — T+7 fixture reuse | Low one-time | Reused across RTL + E2E |
+| `componentSecurity.test.jsx` | High — new isolated view boundaries | Low | Vitest ~ms |
+| `default_deck.test.js` | High — canonical deck blast radius | Low | Vitest ~ms |
+| App oracle forged `cardId` drop | Medium — closes deck lookup gap | Low | Vitest |
+| `e2e/component-library-agent-ux.spec.ts` | High — real browser hostile UX | Medium | Playwright + preview |
+
+**Deferred (follow-up):**
+
+- JSON Schema for `default_deck.json` (currently `validateCard` only).
+- `customImage` URL allowlist (`data:` only) before `<img src>` render.
+- Drag-drop E2E for Oracle bench → zone (coordinate clicks are flaky; RTL drop event used instead).
+
+### Test files added / updated
+
+| File | Change |
+|------|--------|
+| `src/test/fixtures/ComponentLibraryHarness.js` | **New** — constructor-instantiated component fixtures |
+| `src/components/componentSecurity.test.jsx` | **New** — hostile props for library views |
+| `src/default_deck.test.js` | **New** — shipped deck integrity |
+| `src/App.test.jsx` | Oracle forged `cardId` drop boundary |
+| `e2e/component-library-agent-ux.spec.ts` | **New** — Playwright agent UX stories |
+
+### Playwright user stories (priority)
+
+1. **P0 — Library shell:** Load app → `data-aether-ui="main"` + glitch-dark theme visible.
+2. **P1 — Forge hostile compile:** Enter script-like entity name → compile → dex renders escaped text, no script execution.
+3. **P1 — Oracle layout switch:** Draw 3-card spread → switch to Celtic Cross → prior labels cleared → new spread draws.
+4. **P2 — Hostile deck name:** Create deck with markup in name → shell stable, no script execution.
+
+### Validation commands
+
+```bash
+npm run lint
+npm run test          # 98 passed
+npm run build
+npm run test:e2e      # 17 passed (4 new component-library stories)
+```
+
+---
+
 **Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
 **Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
 **Date:** 2026-06-08

@@ -417,6 +417,26 @@ describe('App', () => {
     vi.unstubAllGlobals();
   });
 
+  it('oracle drop ignores forged card ids not present in the active deck', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByTestId('aether-nav-oracle'));
+    await user.click(screen.getByTestId('aether-oracle-draw'));
+
+    const harness = await import('./test/fixtures/ComponentLibraryHarness.js');
+    const fixtures = new harness.ComponentLibraryHarness();
+    const forgedId = fixtures.forgedCardIds.unknown;
+
+    const zone = document.querySelector('[class*="border-transparent"]');
+    expect(zone).toBeTruthy();
+    fireEvent.drop(zone, {
+      dataTransfer: { getData: () => forgedId },
+    });
+
+    expect(screen.queryByText(forgedId)).not.toBeInTheDocument();
+    expect(screen.getByTestId('aether-view-oracle')).toBeInTheDocument();
+  });
+
   it('validates banlist at the boundary in the Arena view', async () => {
     const user = userEvent.setup();
     render(<App />);
