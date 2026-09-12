@@ -119,6 +119,32 @@ describe('usePersistedDeck', () => {
     expect(result.current.activeDeckId).toBe(persisted.activeDeckId);
   });
 
+  it('orphan activeDeckId falls back to first deck cards without crash', () => {
+    const persisted = fixtures.multiDeckState({
+      activeDeckId: 'agentic-orphan-deck-id',
+      cards: fixtures.validDeck(3),
+    });
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: JSON.stringify(persisted),
+    });
+
+    expect(result.current.activeDeckId).toBe('agentic-orphan-deck-id');
+    expect(result.current.deck).toEqual(persisted.decks[0].cards);
+    expect(result.current.deck).toHaveLength(3);
+  });
+
+  it('empty activeDeckId migrates to legacy/fallback path instead of using multi-deck state', () => {
+    const valid = fixtures.validCard();
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: JSON.stringify({
+        decks: [{ id: 'default', name: 'X', deckBack: 'standard', cards: [valid] }],
+        activeDeckId: '',
+      }),
+    });
+
+    expect(result.current.deck).toEqual(fallbackDeck);
+  });
+
   it('survives malicious stored payloads without crashing', () => {
     const payloads = fixtures.maliciousStoredDeckPayloads();
 
