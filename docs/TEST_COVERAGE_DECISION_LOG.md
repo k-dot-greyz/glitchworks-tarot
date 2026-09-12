@@ -112,3 +112,41 @@ Per CONTRIBUTING §2.1 (zero hardcoding in domain logic), **test literals live i
 1. **P0 — Canonical Fool:** Fresh localStorage → Dex → open Fool modal → sub is `Infinite Potential`, no Last.fm/scrobble text.
 2. **P1 — Glitch anchor:** Dex grid shows `The Glitch`.
 3. **P1 — Arena bench:** Default deck cards visible on arena bench without storage seed.
+
+---
+
+**Branch:** `greyzxcursor/agentic-security-test-coverage-pr36-v2`  
+**Trigger context:** PR #36 CI success — supplements `greyzxcursor/complete-xmldom-fast-uri-pins-14d0`  
+**Date:** 2026-09-12 (automation pass v2)
+
+## Attack surface reviewed (scoreFormulaRegistry pass)
+
+| Surface | Risk | Mitigation tested |
+|---------|------|-------------------|
+| `rulesets` inline functions → serializable keys | Non-serializable rulesets break hydration/export | `scoreFormula` string keys + `scoreFormulaRegistry` lookup tests |
+| Missing registry entry for ruleset key | Silent fallback to mode base score (wrong UX) | Every ruleset `scoreFormula` resolves in registry |
+| Agentic formula key injection | Arbitrary code via forged formula id | Registry rejects unknown keys; battleEngine guards with `if (scoreFunc)` |
+| Malformed deck shell in multi-deck storage | Crash or undefined cards on hydrate | `usePersistedDeck` recovers deck without `cards` array |
+| Orphan `activeDeckId` | Wrong active deck slice | Normalizes to `validatedDecks[0].id` |
+
+## Prioritization (impact vs cost) — v2 delta
+
+| Added coverage | Impact | Cost | Speed |
+|----------------|--------|------|-------|
+| `rulesets.test.js` registry rewrite | High — fixes broken `calculateScore` tests after #36 refactor | Low | Vitest ~ms |
+| `battleEngine` pokemon + standard path guard | Medium — ruleset blast radius | Low | Vitest ~ms |
+| Malformed deck shell recovery | Medium — persistence boundary | Low | Vitest |
+
+**Deferred (follow-up):**
+
+- Runtime test when `scoreFormula` key is valid string but missing from registry (requires test hook or schema).
+- JSON Schema tying `rulesets.*.scoreFormula` enum to registry keys.
+
+## Test files added / updated (v2 delta)
+
+| File | Change |
+|------|--------|
+| `src/domain/rulesets.test.js` | Rewritten for `scoreFormulaRegistry` |
+| `src/domain/battleEngine.test.js` | Pokemon ruleset + standard path guard |
+| `src/hooks/usePersistedDeck.test.js` | Fixed orphan id expectation; malformed deck shell |
+| `src/test/fixtures/AetherTestFixtures.js` | `scoreFormulaExpectations` constructor map |

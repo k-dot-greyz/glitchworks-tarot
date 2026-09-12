@@ -58,6 +58,28 @@ export class AetherTestFixtures {
       combatDisabled: options.combatDisabledModeId ?? 'combatDisabled',
       unknown: options.unknownModeId ?? 'agentic-injection-mode',
     };
+
+    this.injectedScoreFormulaKey =
+      options.injectedScoreFormulaKey ?? 'agentic-injection-formula';
+
+    this.scoreFormulaExpectations = options.scoreFormulaExpectations ?? {
+      standard: {
+        formulaKey: 'standard_atk_spd',
+        expectedScore: 20,
+      },
+      mtg: {
+        formulaKey: 'mtg_power_toughness',
+        expectedScore: 17,
+      },
+      yugioh: {
+        formulaKey: 'yugioh_atk_x2',
+        expectedScore: 24,
+      },
+      pokemon: {
+        formulaKey: 'pokemon_atk_spd',
+        expectedScore: 20,
+      },
+    };
   }
 
   validCard(overrides = {}) {

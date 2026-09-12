@@ -128,9 +128,22 @@ describe('usePersistedDeck', () => {
       [fixtures.storageKeys.multiDeck]: JSON.stringify(persisted),
     });
 
-    expect(result.current.activeDeckId).toBe('agentic-orphan-deck-id');
+    expect(result.current.activeDeckId).toBe(persisted.decks[0].id);
     expect(result.current.deck).toEqual(persisted.decks[0].cards);
     expect(result.current.deck).toHaveLength(3);
+  });
+
+  it('malformed deck entry without cards array recovers with fallback cards', () => {
+    const valid = fixtures.validDeck(2);
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: JSON.stringify({
+        activeDeckId: 'default',
+        decks: [{ id: 'default', name: 'Broken shell' }, { id: 'ok', name: 'OK', deckBack: 'standard', cards: valid }],
+      }),
+    });
+
+    expect(result.current.decks[0].cards).toEqual(fallbackDeck);
+    expect(result.current.decks[1].cards).toEqual(valid);
   });
 
   it('empty activeDeckId migrates to legacy/fallback path instead of using multi-deck state', () => {

@@ -165,6 +165,34 @@ describe('battleEngine', () => {
         expect(injected).toEqual(baseline);
       });
 
+      it('applies pokemon ruleset scoring (ATK + SPD) with elemental multiplier', () => {
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.pokemon,
+        );
+        expect(result.winner).toBe('p1');
+        expect(result.p1Score).toBe(105);
+        expect(result.p2Score).toBe(70);
+      });
+
+      it('standard ruleset does not double-apply scoreFormulaRegistry path', () => {
+        const standard = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.standard,
+        );
+        const mtg = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.mtg,
+        );
+        expect(standard.p1Score).not.toBe(mtg.p1Score);
+      });
+
       it('does not throw when combatant stats contain non-finite numbers', () => {
         const broken = {
           ...p1,
