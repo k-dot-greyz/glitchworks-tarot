@@ -28,7 +28,9 @@ npm run test:e2e:ui   # Playwright UI mode
 - `src/App.test.jsx` — RTL tests for the tarot generator shell
 - `src/components/library.test.jsx` — Aether Deck library exports and isolated views
 - `src/setupTests.js` — `jest-dom` for Vitest
-- `e2e/*.spec.ts` — Playwright specs
+- `e2e/*.spec.ts` — Playwright specs (`app.spec.ts` core flows, `arena-security.spec.ts` ruleset/clash/boundary)
+- `src/test/fixtures/AetherTestFixtures.js` — constructor-based unit test fixtures
+- `docs/TEST_COVERAGE_DECISION_LOG.md` — agentic security pass notes and deferred follow-ups
 - `vitest.config.js` — `setupFiles`, coverage globs
 
 ## Agent / progress log

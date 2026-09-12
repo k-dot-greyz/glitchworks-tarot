@@ -1,0 +1,187 @@
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * Arena UX + boundary scenarios (rulesets, banlist, clash resolution, hostile storage).
+ * Selectors and baseURL come from playwright.config.ts / docs/TESTIDS.md — no hardcoded hosts.
+ */
+class ArenaE2EFixtures {
+  readonly selectors;
+  readonly cardNames;
+  readonly rulesetIds;
+  readonly arenaModes;
+  readonly storageKey;
+  readonly expectedTelemetryErrors;
+
+  constructor(options: {
+    selectors?: Record<string, string>;
+    cardNames?: Record<string, string>;
+    rulesetIds?: Record<string, string>;
+    arenaModes?: Record<string, string>;
+    storageKey?: string;
+    expectedTelemetryErrors?: string[];
+  } = {}) {
+    this.selectors = {
+      root: options.selectors?.root ?? 'aether-root',
+      navArena: options.selectors?.navArena ?? 'aether-nav-arena',
+      viewArena: options.selectors?.viewArena ?? 'aether-view-arena',
+      rulesetSelect: options.selectors?.rulesetSelect ?? 'aether-arena-ruleset-select',
+      modeSelect: options.selectors?.modeSelect ?? 'aether-arena-mode-select',
+      clash: options.selectors?.clash ?? 'aether-arena-clash',
+      flush: options.selectors?.flush ?? 'aether-arena-flush',
+      log: options.selectors?.log ?? 'aether-arena-log',
+    };
+
+    this.cardNames = {
+      fool: options.cardNames?.fool ?? 'The Fool',
+      priestess: options.cardNames?.priestess ?? 'High Priestess',
+      magician: options.cardNames?.magician ?? 'The Magician',
+    };
+
+    this.rulesetIds = {
+      standard: options.rulesetIds?.standard ?? 'standard',
+      mtg: options.rulesetIds?.mtg ?? 'mtg',
+      yugioh: options.rulesetIds?.yugioh ?? 'yugioh',
+    };
+
+    this.arenaModes = {
+      combatDisabled: options.arenaModes?.combatDisabled ?? 'combatDisabled',
+    };
+
+    this.storageKey = options.storageKey ?? 'aether-decks';
+
+    // Expected operational telemetry that uses console.error (see consoleTelemetry.js),
+    // plus browser favicon 404 noise (no favicon in index.html).
+    this.expectedTelemetryErrors = options.expectedTelemetryErrors ?? [
+      '[AETHER_TELEMETRY] [ERROR] DECKS_PARSE_FAILED',
+      'Failed to load resource: the server responded with a status of 404',
+    ];
+  }
+}
+
+const fixtures = new ArenaE2EFixtures();
+
+/**
+ * Bench cards are CSS-3D flipped inside an overflow-masked scroller.
+ * Coordinate clicks miss the visual target; dispatch a DOM click on the card root.
+ */
+async function clickBenchCard(page: Page, name: string) {
+  await page
+    .getByTestId(fixtures.selectors.viewArena)
+    .getByRole('heading', { name, exact: true })
+    .evaluate((el) => {
+      const cardRoot = el.closest('.cursor-pointer');
+      (cardRoot instanceof HTMLElement ? cardRoot : el).click();
+    });
+}
+
+test.describe('Arena — rulesets, clash, and hostile storage', () => {
+  test('user story: place two cards and resolve a standard clash', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId(fixtures.selectors.navArena).click();
+    await expect(page.getByTestId(fixtures.selectors.viewArena)).toBeVisible();
+
+    await clickBenchCard(page, fixtures.cardNames.fool);
+    await clickBenchCard(page, fixtures.cardNames.priestess);
+
+    const clash = page.getByTestId(fixtures.selectors.clash);
+    await expect(clash).toBeEnabled();
+    await clash.click();
+
+    const log = page.getByTestId(fixtures.selectors.log);
+    await expect(log).toHaveText(/DATA COLLISION|OVERWRITES|EQUILIBRIUM/i, {
+      timeout: 3000,
+    });
+  });
+
+  test('ruleset switch reinitializes playmat and enables clash only with valid slots', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId(fixtures.selectors.navArena).click();
+
+    await page.getByTestId(fixtures.selectors.rulesetSelect).selectOption(
+      fixtures.rulesetIds.mtg,
+    );
+    await expect(page.getByText('P1 Battlefield')).toBeVisible();
+    await expect(page.getByTestId(fixtures.selectors.clash)).toBeDisabled();
+
+    await page.getByTestId(fixtures.selectors.rulesetSelect).selectOption(
+      fixtures.rulesetIds.yugioh,
+    );
+    await expect(page.getByText('P1 Monster Zone')).toBeVisible();
+    await expect(page.getByText('Shadow Realm')).toBeVisible();
+  });
+
+  test('mtg banlist blocks banned card at arena boundary', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId(fixtures.selectors.navArena).click();
+    await page.getByTestId(fixtures.selectors.rulesetSelect).selectOption(
+      fixtures.rulesetIds.mtg,
+    );
+
+    await clickBenchCard(page, fixtures.cardNames.magician);
+    await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
+      /BANNED IN MTG BATTLEFIELD/i,
+    );
+    await expect(page.getByTestId(fixtures.selectors.clash)).toBeDisabled();
+  });
+
+  test('flush resets arena slots after card placement', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId(fixtures.selectors.navArena).click();
+
+    await clickBenchCard(page, fixtures.cardNames.fool);
+    await page.getByTestId(fixtures.selectors.flush).click();
+    await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(/ARENA WIPED/i);
+    await expect(page.getByTestId(fixtures.selectors.clash)).toBeDisabled();
+  });
+
+  test('malformed localStorage does not white-screen the shell', async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      localStorage.setItem(storageKey, '{"decks":[broken json');
+    }, fixtures.storageKey);
+
+    const errors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+
+    await page.goto('/');
+    await expect(page.getByTestId(fixtures.selectors.root)).toBeVisible();
+
+    const stored = await page.evaluate((key) => localStorage.getItem(key), fixtures.storageKey);
+    if (stored !== null) {
+      await page.evaluate((raw) => {
+        JSON.parse(raw as string);
+      }, stored);
+    }
+
+    const unexpected = errors.filter(
+      (text) =>
+        !fixtures.expectedTelemetryErrors.some((allowed) => text.includes(allowed)),
+    );
+    expect(
+      unexpected,
+      `unexpected console errors: ${unexpected.join('\n')}`,
+    ).toHaveLength(0);
+  });
+
+  test('combat disabled mode keeps clash button inert', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId(fixtures.selectors.navArena).click();
+    await page.getByTestId(fixtures.selectors.modeSelect).selectOption(
+      fixtures.arenaModes.combatDisabled,
+    );
+
+    const clash = page.getByTestId(fixtures.selectors.clash);
+    await expect(clash).toBeDisabled();
+    await expect(clash).toHaveText(/COMBAT DISABLED/i);
+    await expect(page.getByTestId(fixtures.selectors.log)).toHaveText(
+      /SYSTEMS IN HARMONY/i,
+    );
+
+    await clickBenchCard(page, fixtures.cardNames.fool);
+    await clickBenchCard(page, fixtures.cardNames.priestess);
+    await expect(clash).toBeDisabled();
+  });
+});
