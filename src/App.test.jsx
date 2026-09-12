@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import App from './App.jsx';
@@ -407,6 +407,25 @@ describe('App', () => {
     expect(screen.queryByText('REPLACE CUSTOM ARTWORK')).not.toBeInTheDocument();
 
     vi.unstubAllGlobals();
+  });
+
+  it('resolves arena clash when both standard slots are filled', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('aether-nav-arena'));
+    fireEvent.click(screen.getByText('The Fool'));
+    fireEvent.click(screen.getByText('The Magician'));
+
+    const clash = screen.getByTestId('aether-arena-clash');
+    expect(clash).not.toBeDisabled();
+    fireEvent.click(clash);
+
+    await waitFor(
+      () => {
+        const log = screen.getByTestId('aether-arena-log').textContent;
+        expect(log).toMatch(/OVERWRITES|EQUILIBRIUM/);
+      },
+      { timeout: 2000 },
+    );
   });
 
   it('validates banlist at the boundary in the Arena view', async () => {
