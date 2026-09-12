@@ -149,6 +149,19 @@ describe('battleEngine', () => {
         expect(result.p2Score).toBe(80);
       });
 
+      it('applies pokemon ruleset scoring (ATK + SPD) like standard formula', () => {
+        // Same numeric formula as standard: 70 base each → 105 vs 70 with elemental
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.pokemon,
+        );
+        expect(result.winner).toBe('p1');
+        expect(result.p1Score).toBe(105);
+        expect(result.p2Score).toBe(70);
+      });
+
       it('falls back safely when mode or ruleset id is injected/unknown', () => {
         const baseline = resolveBattleWithEngine(
           p1,
