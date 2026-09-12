@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rulesets } from './rulesets.js';
+import { rulesets, scoreFormulaRegistry } from './rulesets.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('rulesets', () => {
@@ -45,25 +45,42 @@ describe('rulesets', () => {
     }
   });
 
-  describe('calculateScore', () => {
-    it('standard ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.standard.calculateScore(card)).toBe(20);
+  describe('scoreFormulaRegistry (serializable ruleset formulas)', () => {
+    const rulesetIdsWithFormulas = ['standard', 'mtg', 'yugioh', 'pokemon'];
+
+    for (const rulesetId of rulesetIdsWithFormulas) {
+      it(`${rulesetId} ruleset references a registry key that scores correctly`, () => {
+        const expectation = fixtures.scoreFormulaExpectations[rulesetId];
+        const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
+        const ruleset = rulesets[rulesetId];
+        expect(ruleset.scoreFormula).toBe(expectation.formulaKey);
+        expect(typeof ruleset.scoreFormula).toBe('string');
+        const scoreFunc = scoreFormulaRegistry[ruleset.scoreFormula];
+        expect(scoreFunc).toBeTypeOf('function');
+        expect(scoreFunc(card)).toBe(expectation.expectedScore);
+      });
+    }
+
+    it('every non-standard ruleset scoreFormula resolves in the registry', () => {
+      for (const id of requiredRulesetIds()) {
+        const ruleset = rulesets[id];
+        expect(typeof ruleset.scoreFormula).toBe('string');
+        expect(scoreFormulaRegistry[ruleset.scoreFormula]).toBeTypeOf(
+          'function',
+        );
+      }
     });
 
-    it('mtg ruleset scores ATK + DEF (power + toughness)', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.mtg.calculateScore(card)).toBe(17);
+    it('rejects agentic-injected formula keys at registry boundary', () => {
+      const injectedKey = fixtures.injectedScoreFormulaKey;
+      expect(scoreFormulaRegistry[injectedKey]).toBeUndefined();
     });
 
-    it('yugioh ruleset scores ATK * 2', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.yugioh.calculateScore(card)).toBe(24);
-    });
-
-    it('pokemon ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.pokemon.calculateScore(card)).toBe(20);
+    it('registry formulas tolerate missing stat fields without throwing', () => {
+      const broken = fixtures.validCard({ stats: {} });
+      for (const scoreFunc of Object.values(scoreFormulaRegistry)) {
+        expect(() => scoreFunc(broken)).not.toThrow();
+      }
     });
   });
 
