@@ -8,6 +8,8 @@ test.describe('Aether deck — core flows', () => {
     });
     await page.goto('/');
     await expect(page.getByTestId('aether-root')).toBeVisible();
+    await expect(page.getByTestId('aether-root')).toHaveAttribute('data-theme', 'glitch-dark');
+    await expect(page.getByTestId('aether-root')).toHaveAttribute('data-aether-ui', 'main');
     await expect(page.getByTestId('aether-view-dex')).toBeVisible();
     expect(errors, `console errors: ${errors.join('\n')}`).toHaveLength(0);
   });
