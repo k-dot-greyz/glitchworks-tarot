@@ -58,6 +58,20 @@ export class AetherTestFixtures {
       combatDisabled: options.combatDisabledModeId ?? 'combatDisabled',
       unknown: options.unknownModeId ?? 'agentic-injection-mode',
     };
+
+    this.formulaIds = {
+      standard: options.standardFormulaId ?? 'standard_atk_spd',
+      mtg: options.mtgFormulaId ?? 'mtg_power_toughness',
+      yugioh: options.yugiohFormulaId ?? 'yugioh_atk_x2',
+      pokemon: options.pokemonFormulaId ?? 'pokemon_atk_spd',
+      unknown: options.unknownFormulaId ?? 'agentic-injection-formula',
+    };
+
+    this.deckIds = {
+      default: options.defaultDeckId ?? 'default',
+      orphan: options.orphanDeckId ?? 'agentic-orphan-deck-id',
+      recovered: options.recoveredDeckId ?? 'recovered-deck',
+    };
   }
 
   validCard(overrides = {}) {
@@ -79,7 +93,7 @@ export class AetherTestFixtures {
   }
 
   multiDeckState(overrides = {}) {
-    const deckId = overrides.deckId ?? 'default';
+    const deckId = overrides.deckId ?? this.deckIds.default;
     return {
       activeDeckId: overrides.activeDeckId ?? deckId,
       decks: overrides.decks ?? [
@@ -89,6 +103,33 @@ export class AetherTestFixtures {
           deckBack: overrides.deckBack ?? 'standard',
           cards: overrides.cards ?? this.validDeck(2),
         },
+      ],
+    };
+  }
+
+  orphanActiveDeckState(overrides = {}) {
+    const deckId = overrides.deckId ?? this.deckIds.default;
+    return this.multiDeckState({
+      activeDeckId: overrides.activeDeckId ?? this.deckIds.orphan,
+      deckId,
+      cards: overrides.cards ?? this.validDeck(2),
+      deckName: overrides.deckName,
+    });
+  }
+
+  malformedDeckEntryState(overrides = {}) {
+    const validDeck = {
+      id: this.deckIds.default,
+      name: overrides.validDeckName ?? 'AETHER DECK',
+      deckBack: 'standard',
+      cards: overrides.cards ?? this.validDeck(2),
+    };
+
+    return {
+      activeDeckId: overrides.activeDeckId ?? this.deckIds.default,
+      decks: overrides.decks ?? [
+        validDeck,
+        overrides.malformedEntry ?? null,
       ],
     };
   }

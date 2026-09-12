@@ -179,6 +179,36 @@ describe('battleEngine', () => {
           ),
         ).not.toThrow();
       });
+
+      it('overlays non-standard ruleset formula after arena mode base modifier', () => {
+        // speedBlitz base would be ATK + SPD*2; mtg overlay replaces with ATK + DEF.
+        const speedBlitzMtg = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.speedBlitz,
+          fixtures.rulesetIds.mtg,
+        );
+        const standardMtg = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.mtg,
+        );
+
+        expect(speedBlitzMtg.p1Score).toBe(standardMtg.p1Score);
+        expect(speedBlitzMtg.p2Score).toBe(standardMtg.p2Score);
+      });
+
+      it('applies pokemon ruleset scoring (ATK + SPD) with elemental multiplier', () => {
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.pokemon,
+        );
+        expect(result.p1Score).toBe(105);
+        expect(result.p2Score).toBe(70);
+      });
     });
   });
 });
