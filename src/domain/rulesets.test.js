@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rulesets } from './rulesets.js';
+import { rulesets, scoreFormulaRegistry } from './rulesets.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('rulesets', () => {
@@ -45,25 +45,35 @@ describe('rulesets', () => {
     }
   });
 
-  describe('calculateScore', () => {
-    it('standard ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.standard.calculateScore(card)).toBe(20);
+  describe('scoreFormulaRegistry', () => {
+    const card = () => fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
+
+    it('maps every ruleset scoreFormula key to a registry function', () => {
+      for (const id of requiredRulesetIds()) {
+        const formulaKey = rulesets[id].scoreFormula;
+        expect(typeof scoreFormulaRegistry[formulaKey]).toBe('function');
+      }
     });
 
-    it('mtg ruleset scores ATK + DEF (power + toughness)', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.mtg.calculateScore(card)).toBe(17);
+    it('standard formula scores ATK + SPD', () => {
+      expect(scoreFormulaRegistry.standard_atk_spd(card())).toBe(20);
     });
 
-    it('yugioh ruleset scores ATK * 2', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.yugioh.calculateScore(card)).toBe(24);
+    it('mtg formula scores ATK + DEF (power + toughness)', () => {
+      expect(scoreFormulaRegistry.mtg_power_toughness(card())).toBe(17);
     });
 
-    it('pokemon ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.pokemon.calculateScore(card)).toBe(20);
+    it('yugioh formula scores ATK * 2', () => {
+      expect(scoreFormulaRegistry.yugioh_atk_x2(card())).toBe(24);
+    });
+
+    it('pokemon formula scores ATK + SPD', () => {
+      expect(scoreFormulaRegistry.pokemon_atk_spd(card())).toBe(20);
+    });
+
+    it('rejects agentic-injected formula keys at lookup boundary', () => {
+      const injectedKey = fixtures.rulesetIds.unknown;
+      expect(scoreFormulaRegistry[injectedKey]).toBeUndefined();
     });
   });
 

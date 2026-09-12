@@ -1,5 +1,58 @@
 # Test coverage decision log — agentic security pass
 
+## 2026-09-12 — PR #34 (dependabot npm bumps) + default deck invariants
+
+**Branch:** `greyzxcursor/agentic-security-test-coverage-495a`  
+**Trigger context:** PR #34 (`dependabot/npm_and_yarn/npm_and_yarn-4e5eecd30c`) — dependency bumps atop merged default deck (#25) and ruleset refactor (#23)  
+**Base:** `dependabot/npm_and_yarn/npm_and_yarn-4e5eecd30c`
+
+### Attack surface reviewed
+
+| Surface | Risk | Mitigation tested |
+|---------|------|-------------------|
+| `default_deck.json` shipped payload | Tampered or API-coupled deck poisons first-run UX | `DefaultDeckHarness` schema, anchor cards, forbidden patterns |
+| `forgeCard` id allocation | Collision with `404` (The Glitch) breaks forge UX | Unit + E2E compile flow |
+| `localStorage` legacy `aether-deck` | Migration path white-screens or drops cards | `usePersistedDeck` + Playwright legacy hydration |
+| Orphan `activeDeckId` | Agentic storage leaves shell on missing deck | `usePersistedDeck` fallback to first deck |
+| `scoreFormulaRegistry` | Unknown formula keys from injected ruleset ids | Registry key alignment + undefined lookup |
+| `rulesets.test.js` drift | Tests called removed `calculateScore` — false green in CI | Rewired to `scoreFormulaRegistry` |
+
+### Prioritization (impact vs cost)
+
+| Added coverage | Impact | Cost | Speed |
+|----------------|--------|------|-------|
+| Fix `rulesets.test.js` for registry refactor | High — CI was failing on PR #34 | Low | Vitest ~ms |
+| `DefaultDeckHarness` + `defaultDeck.test.js` | High — canonical deck blast radius | Low | Vitest ~ms |
+| `usePersistedDeck` orphan + legacy paths | High — persistence boundary | Low | Vitest ~ms |
+| `e2e/default-deck-agent-ux.spec.ts` | High — real UX for deck restore + forge | Medium | Playwright + preview |
+
+**Deferred (follow-up):**
+
+- Normalize orphan `activeDeckId` to first valid deck id on hydrate (currently keeps orphan string but resolves cards safely).
+- JSON Schema for `default_deck.json` (structural drift guard).
+- Lockfile pin regression tests for xmldom/fast-uri (tracked on PR #36 branch).
+
+### Test files added / updated
+
+| File | Change |
+|------|--------|
+| `src/test/fixtures/DefaultDeckHarness.js` | **New** — constructor harness for shipped deck |
+| `src/domain/defaultDeck.test.js` | **New** — canonical deck invariants |
+| `src/domain/rulesets.test.js` | **Updated** — `scoreFormulaRegistry` (fixes broken `calculateScore` refs) |
+| `src/hooks/usePersistedDeck.test.js` | **Updated** — orphan activeDeckId + legacy migration |
+| `e2e/default-deck-agent-ux.spec.ts` | **New** — Playwright default deck UX |
+
+### Playwright user stories (priority)
+
+1. **P0 — Fresh load:** Dex shows The Fool and The Glitch from shipped deck.
+2. **P1 — Legacy storage:** `aether-deck` hydrates without console errors or white-screen.
+3. **P1 — Forge compile:** New card id avoids collision with `404` / gap ids `018`/`019`.
+4. **P2 — Deck selector:** `default` deck id survives reload.
+
+---
+
+## 2026-06-08 — PR #21 (arena rulesets)
+
 **Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
 **Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
 **Date:** 2026-06-08
