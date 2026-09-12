@@ -26,15 +26,31 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
       parsed.decks.length > 0 &&
       parsed.activeDeckId
     ) {
-      // Validate each deck's cards
+      // Validate each deck's cards and structure
       const validatedDecks = parsed.decks.map((d) => {
+        // Ensure deck object is valid and has cards array
+        if (!d || typeof d !== 'object' || !Array.isArray(d.cards)) {
+          return {
+            id: d?.id || `deck-${Date.now()}`,
+            name: d?.name || 'RECOVERED DECK',
+            deckBack: d?.deckBack || 'standard',
+            cards: fallbackDeck
+          };
+        }
+        // Validate cards array
         if (validateDeck(d.cards)) {
           return d;
         }
         return { ...d, cards: fallbackDeck };
       });
+
+      // Ensure activeDeckId refers to a valid deck
+      const validActiveDeckId = validatedDecks.some(d => d.id === parsed.activeDeckId)
+        ? parsed.activeDeckId
+        : validatedDecks[0].id;
+
       return {
-        activeDeckId: parsed.activeDeckId,
+        activeDeckId: validActiveDeckId,
         decks: validatedDecks,
       };
     }
@@ -111,7 +127,7 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
 
   // Create a new deck
   const createDeck = (name) => {
-    const newId = `deck-${Date.now()}`;
+    const newId = crypto.randomUUID ? `deck-${crypto.randomUUID()}` : `deck-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const newDeck = {
       id: newId,
       name: name || `DECK_${state.decks.length + 1}`,
@@ -130,7 +146,7 @@ export function usePersistedDeck(storage, telemetry, fallbackDeck) {
     const target = state.decks.find((d) => d.id === id);
     if (!target) return;
 
-    const newId = `deck-${Date.now()}`;
+    const newId = crypto.randomUUID ? `deck-${crypto.randomUUID()}` : `deck-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const duplicated = {
       ...target,
       id: newId,
