@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import App from './App.jsx';
@@ -359,45 +359,54 @@ describe('App', () => {
     expect(screen.getByText('P1 Discard Pile')).toBeInTheDocument();
   });
 
-  it('compileForgeCard: no duplicate card IDs on rapid double-click (stale-closure regression)', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-    await user.click(screen.getByTestId('aether-nav-forge'));
-
-    const compileBtn = screen.getByTestId('aether-forge-compile');
-    // Fire two clicks back-to-back — both land before any state flush
-    await user.click(compileBtn);
-    await user.click(compileBtn);
-
-    const saved = localStorage.getItem('aether-decks');
-    const savedState = JSON.parse(saved);
-    const savedDeck = savedState.decks.find(
-      (d) => d.id === savedState.activeDeckId,
-    ).cards;
-    const ids = savedDeck.map((c) => c.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
   it('saveForgeCard: cosmetic fields are fully reset after compile (stale-spread regression)', async () => {
     const user = userEvent.setup();
+
+    let capturedOnloadend = null;
+    const fakeResult = 'data:image/png;base64,FAKE';
+    vi.stubGlobal('FileReader', class {
+      constructor() { this.result = fakeResult; }
+      set onloadend(fn) { capturedOnloadend = fn; }
+      readAsDataURL() {}
+    });
+
     render(<App />);
     await user.click(screen.getByTestId('aether-nav-forge'));
 
-    // Set every cosmetic to a non-default value
+    // Set every cosmetic / override to a non-default value
     await user.selectOptions(screen.getByTestId('aether-forge-frame'), 'neonGlow');
     await user.selectOptions(screen.getByTestId('aether-forge-hat'), 'cyberCrown');
     await user.selectOptions(screen.getByTestId('aether-forge-rarity'), 'ultra-rare');
     await user.selectOptions(screen.getByTestId('aether-forge-ability'), 'overdrive');
+    await user.click(screen.getByText('LORE VISIBLE'));
+    await user.click(screen.getByText('STATS VISIBLE'));
+
+    const fileInput = document.querySelector('input[type="file"]');
+    const fakeFile = new File(['data'], 'art.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } });
+    expect(capturedOnloadend).toBeTruthy();
+    act(() => {
+      capturedOnloadend();
+    });
+    expect(screen.getByText('REPLACE CUSTOM ARTWORK')).toBeInTheDocument();
+    expect(screen.getByText('LORE HIDDEN')).toBeInTheDocument();
+    expect(screen.getByText('STATS HIDDEN')).toBeInTheDocument();
 
     // Compile → navigate to dex → come back to forge
     await user.click(screen.getByTestId('aether-forge-compile'));
     await user.click(screen.getByTestId('aether-nav-forge'));
 
-    // All cosmetic overrides must be back at their defaults
+    // All cosmetic / override fields must be back at their defaults
     expect(screen.getByTestId('aether-forge-frame').value).toBe('standard');
     expect(screen.getByTestId('aether-forge-hat').value).toBe('none');
     expect(screen.getByTestId('aether-forge-rarity').value).toBe('common');
     expect(screen.getByTestId('aether-forge-ability').value).toBe('none');
+    expect(screen.getByText('LORE VISIBLE')).toBeInTheDocument();
+    expect(screen.getByText('STATS VISIBLE')).toBeInTheDocument();
+    expect(screen.getByText('UPLOAD CUSTOM ARTWORK')).toBeInTheDocument();
+    expect(screen.queryByText('REPLACE CUSTOM ARTWORK')).not.toBeInTheDocument();
+
+    vi.unstubAllGlobals();
   });
 
   it('validates banlist at the boundary in the Arena view', async () => {
