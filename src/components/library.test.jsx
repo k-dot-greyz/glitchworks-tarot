@@ -39,6 +39,14 @@ describe('Aether Deck component library', () => {
     expect(typeof GlitchOverlays).toBe('function');
   });
 
+  it('renders in-document grain so the noise filter can paint', () => {
+    render(<GlitchOverlays />);
+    expect(document.getElementById('aether-grain')).toBeTruthy();
+    const overlay = document.querySelector('.noise-overlay');
+    expect(overlay).toBeInTheDocument();
+    expect(overlay.querySelector('svg')).toBeInTheDocument();
+  });
+
   it('renders Dex as a library view with stable test ids', () => {
     render(
       <DexView
