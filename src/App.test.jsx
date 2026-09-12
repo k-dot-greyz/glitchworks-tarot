@@ -19,6 +19,14 @@ describe('App', () => {
     expect(screen.getByTestId('aether-main')).toBeInTheDocument();
   });
 
+  it('applies the dark-mode glitch art theme as the tarot generator shell', () => {
+    render(<App />);
+    const root = screen.getByTestId('aether-root');
+    expect(root).toHaveAttribute('data-theme', 'glitch-dark');
+    expect(root).toHaveAttribute('data-aether-ui', 'main');
+    expect(document.documentElement.style.getPropertyValue('--glitch-int')).not.toBe('');
+  });
+
   it('switches views when nav tabs are clicked', async () => {
     const user = userEvent.setup();
     render(<App />);

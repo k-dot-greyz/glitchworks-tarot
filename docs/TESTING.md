@@ -25,7 +25,8 @@ npm run test:e2e:ui   # Playwright UI mode
 
 ## Where tests live
 
-- `src/App.test.jsx` — RTL tests
+- `src/App.test.jsx` — RTL tests for the tarot generator shell
+- `src/components/library.test.jsx` — Aether Deck library exports and isolated views
 - `src/setupTests.js` — `jest-dom` for Vitest
 - `e2e/*.spec.ts` — Playwright specs
 - `vitest.config.js` — `setupFiles`, coverage globs

@@ -39,4 +39,4 @@ Only add IDs where tests need them (nav, modals, primary actions, key views). Do
 | `aether-modal-card` | Card detail overlay (dex) |
 | `aether-modal-card-close` | Close card modal |
 
-When splitting `App.jsx`, **keep these IDs stable** on the moved nodes.
+Views and chrome live in `src/components/` (`DexView`, `ArenaView`, `OracleView`, `ForgeView`, `AppNav`, `SettingsModal`, `CardModal`). **Keep these IDs stable** on the moved nodes.

@@ -1,6 +1,8 @@
 # glitchworks-tarot (Glitchworks — Aether Deck)
 
-Dark-mode **cyber-mystic** card UI: **Dex** (library), **Arena** (clash), **Oracle** (spread), **Forge** (entity builder). React 18 + Vite + Tailwind + lucide-react.
+Dark-mode **glitch-art** card UI: **Dex** (library), **Arena** (clash), **Oracle** (tarot generator), **Forge** (entity builder). React 18 + Vite + Tailwind + lucide-react.
+
+The Aether Deck component library in `src/components/` is the main UI. `App.jsx` is the orchestrator.
 
 ## Quick start (launch)
 
