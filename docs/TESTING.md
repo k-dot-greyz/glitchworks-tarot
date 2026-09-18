@@ -27,7 +27,7 @@ npm run test:e2e:ui   # Playwright UI mode
 
 - `src/App.test.jsx` — RTL tests
 - `src/setupTests.js` — `jest-dom` for Vitest
-- `e2e/*.spec.ts` — Playwright specs (`app.spec.ts` core flows, `arena-security.spec.ts` ruleset/clash/boundary)
+- `e2e/*.spec.ts` — Playwright specs (`app.spec.ts` core flows, `arena-security.spec.ts` ruleset/clash/boundary, `forge-security.spec.ts` compile/cosmetic reset)
 - `src/test/fixtures/AetherTestFixtures.js` — constructor-based unit test fixtures
 - `docs/TEST_COVERAGE_DECISION_LOG.md` — agentic security pass notes and deferred follow-ups
 - `vitest.config.js` — `setupFiles`, coverage globs

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rulesets } from './rulesets.js';
+import { rulesets, scoreFormulaRegistry } from './rulesets.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('rulesets', () => {
@@ -45,25 +45,45 @@ describe('rulesets', () => {
     }
   });
 
-  describe('calculateScore', () => {
-    it('standard ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.standard.calculateScore(card)).toBe(20);
+  it('keeps ruleset definitions JSON-serializable (no embedded runtime functions)', () => {
+    const serialized = JSON.stringify(rulesets);
+    const revived = JSON.parse(serialized);
+    for (const id of requiredRulesetIds()) {
+      expect(revived[id].scoreFormula).toBe(rulesets[id].scoreFormula);
+      expect(typeof revived[id].scoreFormula).toBe('string');
+    }
+    expect(() => JSON.stringify(rulesets)).not.toThrow();
+  });
+
+  it('maps every ruleset scoreFormula key to a registry function', () => {
+    for (const id of requiredRulesetIds()) {
+      const key = rulesets[id].scoreFormula;
+      expect(typeof scoreFormulaRegistry[key]).toBe('function');
+    }
+  });
+
+  describe('scoreFormulaRegistry', () => {
+    const card = () =>
+      fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
+
+    it('standard_atk_spd scores ATK + SPD', () => {
+      expect(scoreFormulaRegistry.standard_atk_spd(card())).toBe(20);
     });
 
-    it('mtg ruleset scores ATK + DEF (power + toughness)', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.mtg.calculateScore(card)).toBe(17);
+    it('mtg_power_toughness scores ATK + DEF (power + toughness)', () => {
+      expect(scoreFormulaRegistry.mtg_power_toughness(card())).toBe(17);
     });
 
-    it('yugioh ruleset scores ATK * 2', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.yugioh.calculateScore(card)).toBe(24);
+    it('yugioh_atk_x2 scores ATK * 2', () => {
+      expect(scoreFormulaRegistry.yugioh_atk_x2(card())).toBe(24);
     });
 
-    it('pokemon ruleset scores ATK + SPD', () => {
-      const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.pokemon.calculateScore(card)).toBe(20);
+    it('pokemon_atk_spd scores ATK + SPD', () => {
+      expect(scoreFormulaRegistry.pokemon_atk_spd(card())).toBe(20);
+    });
+
+    it('returns undefined for agentic-injected formula keys (registry fail-closed)', () => {
+      expect(scoreFormulaRegistry['agentic-injection-formula']).toBeUndefined();
     });
   });
 
