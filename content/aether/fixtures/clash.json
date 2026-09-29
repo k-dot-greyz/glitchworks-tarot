@@ -1,0 +1,145 @@
+{
+  "id": "fixtures.aether.clash.v1",
+  "scale": 10,
+  "note": "scoreTenths = base * multTenths. Display divides by 10. Do not lock the JavaScript value 110.00000000000001. multTenths 10 means 1.0.",
+  "templates": {
+    "000": { "name": "The Fool", "element": "void", "modules": [], "stats": { "atk": 10, "def": 10, "spd": 90 } },
+    "001": { "name": "The Magician", "element": "fire", "modules": [], "stats": { "atk": 85, "def": 40, "spd": 70 } },
+    "004": { "name": "The Emperor", "element": "electric", "modules": ["mod.ironWall"], "stats": { "atk": 80, "def": 80, "spd": 40 } },
+    "005": { "name": "The Hierophant", "element": "void", "modules": ["mod.voidShield"], "stats": { "atk": 30, "def": 90, "spd": 30 } },
+    "007": { "name": "The Chariot", "element": "wind", "modules": ["mod.overdrive"], "stats": { "atk": 75, "def": 60, "spd": 95 } },
+    "013": { "name": "Death", "element": "dark", "modules": [], "stats": { "atk": 99, "def": 10, "spd": 50 } },
+    "404": { "name": "The Glitch", "element": "dark", "modules": ["mod.voidShield"], "stats": { "atk": 99, "def": 99, "spd": 99 } }
+  },
+  "cases": [
+    {
+      "id": "standard.magician-fool",
+      "law": "clash",
+      "protocol": "standard",
+      "alpha": "001",
+      "omega": "000",
+      "expect": {
+        "winner": "alpha",
+        "advantage": false,
+        "alpha": { "base": 155, "multTenths": 10, "scoreTenths": 1550 },
+        "omega": { "base": 100, "multTenths": 11, "scoreTenths": 1100 }
+      }
+    },
+    {
+      "id": "blitz.chariot-emperor",
+      "law": "clash",
+      "protocol": "blitz",
+      "alpha": "007",
+      "omega": "004",
+      "expect": {
+        "winner": "alpha",
+        "advantage": true,
+        "alpha": { "base": 275, "multTenths": 15, "scoreTenths": 4125 },
+        "omega": { "base": 160, "multTenths": 10, "scoreTenths": 1600 }
+      }
+    },
+    {
+      "id": "sudden.emperor-hierophant",
+      "law": "clash",
+      "protocol": "sudden",
+      "note": "Iron wall adds 20 to base, not to the finished score. Sudden already forced multTenths to 10, so the Hierophant shield changes nothing.",
+      "alpha": "004",
+      "omega": "005",
+      "expect": {
+        "winner": "alpha",
+        "advantage": false,
+        "alpha": { "base": 260, "multTenths": 10, "scoreTenths": 2600 },
+        "omega": { "base": 90, "multTenths": 10, "scoreTenths": 900 }
+      }
+    },
+    {
+      "id": "relic.magician-fool",
+      "law": "relic",
+      "protocol": "standard",
+      "note": "Relic ignores protocol, modules, and the advantage table. Same two zones as clash.",
+      "alpha": "001",
+      "omega": "000",
+      "expect": {
+        "winner": "alpha",
+        "advantage": false,
+        "alpha": { "base": 125, "multTenths": 10, "scoreTenths": 1250 },
+        "omega": { "base": 20, "multTenths": 10, "scoreTenths": 200 }
+      }
+    },
+    {
+      "id": "standard.fool-death",
+      "law": "clash",
+      "protocol": "standard",
+      "note": "Void versus dark is 2. Dark versus void is missing, so Death's multiplier stays 1.",
+      "alpha": "000",
+      "omega": "013",
+      "expect": {
+        "winner": "alpha",
+        "advantage": true,
+        "alpha": { "base": 100, "multTenths": 20, "scoreTenths": 2000 },
+        "omega": { "base": 149, "multTenths": 10, "scoreTenths": 1490 }
+      }
+    },
+    {
+      "id": "standard.glitch-magician",
+      "law": "clash",
+      "protocol": "standard",
+      "note": "Dark versus fire is 1.2. Fire versus dark is missing, so the Glitch shield does not change the Magician's score. It was already 1.",
+      "alpha": "404",
+      "omega": "001",
+      "expect": {
+        "winner": "alpha",
+        "advantage": true,
+        "alpha": { "base": 198, "multTenths": 12, "scoreTenths": 2376 },
+        "omega": { "base": 155, "multTenths": 10, "scoreTenths": 1550 }
+      }
+    },
+    {
+      "id": "standard.fool-glitch",
+      "law": "clash",
+      "protocol": "standard",
+      "note": "The shield fixture. Void versus dark would be 2, which would score 2000 and win. The Glitch module forces multTenths to 10, Fool scores 1000, and The Glitch wins.",
+      "alpha": "000",
+      "omega": "404",
+      "expect": {
+        "winner": "omega",
+        "advantage": false,
+        "alpha": { "base": 100, "multTenths": 10, "scoreTenths": 1000 },
+        "omega": { "base": 198, "multTenths": 10, "scoreTenths": 1980 }
+      }
+    },
+    {
+      "id": "standard.fool-glitch.shield-off",
+      "law": "clash",
+      "protocol": "standard",
+      "note": "Not a printed card. Same stats as 404 with no modules. Proves the module is what flips the winner. Do not delete this case when trimming the canon.",
+      "alpha": "000",
+      "omega": {
+        "name": "The Glitch, unshielded",
+        "element": "dark",
+        "modules": [],
+        "stats": { "atk": 99, "def": 99, "spd": 99 }
+      },
+      "expect": {
+        "winner": "alpha",
+        "advantage": true,
+        "alpha": { "base": 100, "multTenths": 20, "scoreTenths": 2000 },
+        "omega": { "base": 198, "multTenths": 10, "scoreTenths": 1980 }
+      }
+    },
+    {
+      "id": "blitz.chariot-hierophant",
+      "law": "clash",
+      "protocol": "blitz",
+      "note": "Negative shield fixture. Wind has no edge against void, so voidShield does not change the Chariot. Void versus wind is 1.1 and the Chariot has no shield, so the Hierophant keeps 11.",
+      "alpha": "007",
+      "omega": "005",
+      "expect": {
+        "winner": "alpha",
+        "advantage": false,
+        "alpha": { "base": 275, "multTenths": 10, "scoreTenths": 2750 },
+        "omega": { "base": 90, "multTenths": 11, "scoreTenths": 990 }
+      }
+    }
+  ]
+}

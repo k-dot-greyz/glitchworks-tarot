@@ -3,7 +3,8 @@
 | File | Description |
 |------|-------------|
 | [SPEC.md](SPEC.md) | Pointer to the **full v2.1 specification** (lives in dev-master `dex/08-projects/`) |
-| [KERNEL.md](KERNEL.md) | **Proposed** TCG rules kernel — Rust core, JSON packs, TypeScript display only. Not implemented. |
+| [KERNEL.md](KERNEL.md) | **Proposed** TCG rules kernel. Scoring model corrected; still not implemented. |
+| [../content/aether/fixtures/clash.json](../content/aether/fixtures/clash.json) | Locked clash scores, integer tenths. The kernel tests must read this file. |
 | [TESTING.md](TESTING.md) | how we test (Vitest, Playwright, CI) |
 | [TESTIDS.md](TESTIDS.md) | `data-testid` naming and inventory |
 | [AETHER_RAM.ipynb](AETHER_RAM.ipynb) | Agent RAM + optional test output log |
