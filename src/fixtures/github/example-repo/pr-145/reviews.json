@@ -1,0 +1,25 @@
+[
+  {
+    "id": 2404038747,
+    "node_id": "PRR_YQeG5LncWPfqUd1y",
+    "user": {
+      "login": "example-reviewer",
+      "id": 54973232,
+      "node_id": "U_CbFFTObpEUNagUNq",
+      "avatar_url": "",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/example-reviewer",
+      "html_url": "https://github.com/example-reviewer",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Early notes left inline.",
+    "state": "COMMENTED",
+    "html_url": "https://github.com/example-org/example-repo/pull/145#pullrequestreview-2404038747",
+    "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/145",
+    "author_association": "MEMBER",
+    "submitted_at": "2026-10-19T09:40:00Z",
+    "commit_id": "cd60a01ebc305cfbdd3ada158b8f109b50de8cbb"
+  }
+]

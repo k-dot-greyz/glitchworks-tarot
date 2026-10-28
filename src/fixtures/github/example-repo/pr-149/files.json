@@ -1,0 +1,24 @@
+[
+  {
+    "sha": "03cbb3172375437d53c9d0980a96e271e84c19c1",
+    "filename": "src/cli/config.js",
+    "status": "modified",
+    "additions": 9,
+    "deletions": 3,
+    "changes": 12,
+    "blob_url": "https://github.com/example-org/example-repo/blob/570c7ca1fd9cf7947dd16be177a54ec7b94fca0c/src/cli/config.js",
+    "raw_url": "https://github.com/example-org/example-repo/raw/570c7ca1fd9cf7947dd16be177a54ec7b94fca0c/src/cli/config.js",
+    "contents_url": "https://api.github.com/repos/example-org/example-repo/contents/src/cli/config.js?ref=570c7ca1fd9cf7947dd16be177a54ec7b94fca0c"
+  },
+  {
+    "sha": "faaeca2dbff7d51316bdc2013cb77619dc495ee3",
+    "filename": "src/cli/config.test.js",
+    "status": "modified",
+    "additions": 5,
+    "deletions": 0,
+    "changes": 5,
+    "blob_url": "https://github.com/example-org/example-repo/blob/570c7ca1fd9cf7947dd16be177a54ec7b94fca0c/src/cli/config.test.js",
+    "raw_url": "https://github.com/example-org/example-repo/raw/570c7ca1fd9cf7947dd16be177a54ec7b94fca0c/src/cli/config.test.js",
+    "contents_url": "https://api.github.com/repos/example-org/example-repo/contents/src/cli/config.test.js?ref=570c7ca1fd9cf7947dd16be177a54ec7b94fca0c"
+  }
+]

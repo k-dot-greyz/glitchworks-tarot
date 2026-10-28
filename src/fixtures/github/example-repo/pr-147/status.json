@@ -1,0 +1,16 @@
+{
+  "state": "pending",
+  "statuses": [],
+  "sha": "07b4cd03fdd597aadd995116b65df56a86aa37b5",
+  "total_count": 0,
+  "repository": {
+    "id": 846512762,
+    "name": "example-repo",
+    "full_name": "example-org/example-repo",
+    "private": false,
+    "html_url": "https://github.com/example-org/example-repo",
+    "url": "https://api.github.com/repos/example-org/example-repo"
+  },
+  "commit_url": "https://api.github.com/repos/example-org/example-repo/commits/07b4cd03fdd597aadd995116b65df56a86aa37b5",
+  "url": "https://api.github.com/repos/example-org/example-repo/commits/07b4cd03fdd597aadd995116b65df56a86aa37b5/status"
+}

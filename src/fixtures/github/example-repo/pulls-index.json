@@ -1,0 +1,211 @@
+[
+  {
+    "number": 149,
+    "title": "fix(cli): treat an empty config file as defaults",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/example-org/example-repo/pull/149",
+    "user": {
+      "login": "example-dev"
+    },
+    "head": {
+      "ref": "fix/cli-empty-config",
+      "sha": "570c7ca1fd9cf7947dd16be177a54ec7b94fca0c"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "cli"
+      },
+      {
+        "name": "bug"
+      }
+    ],
+    "created_at": "2026-10-19T09:05:00Z",
+    "updated_at": "2026-10-20T11:30:00Z"
+  },
+  {
+    "number": 147,
+    "title": "refactor(storage): split the adapter layer into modules",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/example-org/example-repo/pull/147",
+    "user": {
+      "login": "example-maintainer"
+    },
+    "head": {
+      "ref": "refactor/storage-adapters",
+      "sha": "07b4cd03fdd597aadd995116b65df56a86aa37b5"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "storage"
+      },
+      {
+        "name": "refactor"
+      }
+    ],
+    "created_at": "2026-10-17T15:45:00Z",
+    "updated_at": "2026-10-20T10:20:00Z"
+  },
+  {
+    "number": 145,
+    "title": "docs(api): cursor pagination guide",
+    "state": "open",
+    "draft": true,
+    "html_url": "https://github.com/example-org/example-repo/pull/145",
+    "user": {
+      "login": "example-dev"
+    },
+    "head": {
+      "ref": "docs/api-pagination",
+      "sha": "cd60a01ebc305cfbdd3ada158b8f109b50de8cbb"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "documentation"
+      }
+    ],
+    "created_at": "2026-10-16T08:00:00Z",
+    "updated_at": "2026-10-19T09:15:00Z"
+  },
+  {
+    "number": 142,
+    "title": "feat(widgets): sparkline renderer on the widget registry",
+    "state": "open",
+    "draft": true,
+    "html_url": "https://github.com/example-org/example-repo/pull/142",
+    "user": {
+      "login": "example-dev"
+    },
+    "head": {
+      "ref": "feat/widgets-sparkline",
+      "sha": "05ae46a3445001055aabfb566135b28df89cdc75"
+    },
+    "base": {
+      "ref": "feat/widgets-core",
+      "sha": "43fee6f14adbe905c59af385d51f8547863d13c4"
+    },
+    "labels": [
+      {
+        "name": "widgets"
+      }
+    ],
+    "created_at": "2026-10-15T13:10:00Z",
+    "updated_at": "2026-10-19T18:30:00Z"
+  },
+  {
+    "number": 140,
+    "title": "feat(widgets): gauge renderer on the widget registry",
+    "state": "open",
+    "draft": true,
+    "html_url": "https://github.com/example-org/example-repo/pull/140",
+    "user": {
+      "login": "example-maintainer"
+    },
+    "head": {
+      "ref": "feat/widgets-gauge",
+      "sha": "97cb538fd60d693c27079732ba74a5d5fd537db8"
+    },
+    "base": {
+      "ref": "feat/widgets-core",
+      "sha": "43fee6f14adbe905c59af385d51f8547863d13c4"
+    },
+    "labels": [
+      {
+        "name": "widgets"
+      }
+    ],
+    "created_at": "2026-10-14T11:20:00Z",
+    "updated_at": "2026-10-17T08:45:00Z"
+  },
+  {
+    "number": 138,
+    "title": "feat(widgets): core widget registry",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/example-org/example-repo/pull/138",
+    "user": {
+      "login": "example-dev"
+    },
+    "head": {
+      "ref": "feat/widgets-core",
+      "sha": "43fee6f14adbe905c59af385d51f8547863d13c4"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "widgets"
+      },
+      {
+        "name": "enhancement"
+      }
+    ],
+    "created_at": "2026-10-08T09:30:00Z",
+    "updated_at": "2026-10-18T14:05:00Z"
+  },
+  {
+    "number": 136,
+    "title": "feat(cli): add --dry-run flag to sync command",
+    "state": "closed",
+    "draft": false,
+    "html_url": "https://github.com/example-org/example-repo/pull/136",
+    "user": {
+      "login": "example-dev"
+    },
+    "head": {
+      "ref": "feat/cli-dry-run",
+      "sha": "a93b21301876e7598ebfe7a422217a45d36c869b"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "cli"
+      }
+    ],
+    "created_at": "2026-10-02T10:15:00Z",
+    "updated_at": "2026-10-06T16:40:00Z"
+  },
+  {
+    "number": 133,
+    "title": "chore(deps): bump lint tooling to latest minor",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/example-org/example-repo/pull/133",
+    "user": {
+      "login": "example-bot[bot]"
+    },
+    "head": {
+      "ref": "deps/lint-tooling",
+      "sha": "faacf3a5e4b800de0ba2bf1fcccd961b7834aeea"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "35179fd08f3e96b98956409a91cb34345793b4aa"
+    },
+    "labels": [
+      {
+        "name": "dependencies"
+      }
+    ],
+    "created_at": "2026-10-12T07:00:00Z",
+    "updated_at": "2026-10-19T07:00:00Z"
+  }
+]

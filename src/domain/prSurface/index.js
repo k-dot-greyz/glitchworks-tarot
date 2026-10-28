@@ -1,0 +1,10 @@
+export { buildPrViewModel, buildSurface } from './viewModel.js';
+export { computeFlags, sortFlags, DEFAULT_THRESHOLDS } from './flags.js';
+export { verdict, prSignalScore, sidecarScore, isCollapsed, COLLAPSE_BELOW } from './signal.js';
+export { summarizeChecks } from './checks.js';
+export { summarizeReviews } from './reviews.js';
+export { groupFiles, repoSidecar, sizeClass, fileExt, fileDir } from './files.js';
+export { stackChain } from './stack.js';
+export { linkedRefs, parseRefNumbers, closingRefs } from './issues.js';
+export { isGithubHtmlUrl } from './refs.js';
+export { ageDays, formatLocal, offsetLabel } from './time.js';

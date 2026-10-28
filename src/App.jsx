@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import INITIAL_DECK from './default_deck.json';
 import {
   Sword,
@@ -18,6 +18,7 @@ import {
   Copy,
   Edit3,
   Check,
+  GitPullRequest,
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -25,6 +26,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { GlitchStyles } from './components/GlitchStyles.jsx';
 import { NeonSlider } from './components/NeonSlider.jsx';
 import { Card } from './components/Card.jsx';
+
 import { usePersistedDeck } from './hooks/usePersistedDeck.js';
 import { resolveBattleWithEngine, arenaModes } from './domain/battleEngine.js';
 import { rulesets } from './domain/rulesets.js';
@@ -33,11 +35,22 @@ import { createLocalStorageDeckStorage } from './adapters/localStorageDeckStorag
 import { createConsoleTelemetry } from './adapters/consoleTelemetry.js';
 
 // Default instances for cases where they are not injected (e.g., tests or standard rendering)
+// Read-only PR decision surface; lazy so its bundled fixtures load only on demand.
+const PrSpreadView = lazy(() => import('./components/pr/PrSpreadView.jsx'));
+
 const defaultStorage = createLocalStorageDeckStorage();
 const defaultTelemetry = createConsoleTelemetry();
 
+// Optional deep link / flag: ?view=prs opens the read-only PR decision surface.
+const VIEWS = ['dex', 'arena', 'oracle', 'forge', 'prs'];
+const initialView = () => {
+  if (typeof window === 'undefined') return 'dex';
+  const v = new URLSearchParams(window.location.search).get('view');
+  return VIEWS.includes(v) ? v : 'dex';
+};
+
 export default function App({ storage = defaultStorage, telemetry = defaultTelemetry }) {
-  const [view, setView] = useState('dex'); // 'dex', 'arena', 'oracle', 'forge'
+  const [view, setView] = useState(initialView); // 'dex', 'arena', 'oracle', 'forge', 'prs'
   const {
     decks,
     activeDeckId,
@@ -1321,6 +1334,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
                 { id: 'arena', icon: Sword, color: 'red' },
                 { id: 'oracle', icon: Sparkles, color: 'purple' },
                 { id: 'forge', icon: Hammer, color: 'emerald' },
+                { id: 'prs', icon: GitPullRequest, color: 'amber' },
               ].map((btn) => (
                 <button
                   type="button"
@@ -1364,6 +1378,11 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
         {view === 'arena' && renderArenaView()}
         {view === 'oracle' && renderOracleView()}
         {view === 'forge' && renderForgeView()}
+        {view === 'prs' && (
+          <Suspense fallback={<p className="text-sm text-slate-300 p-6">Loading PR spread…</p>}>
+            <PrSpreadView />
+          </Suspense>
+        )}
       </main>
 
       {/* Card Details Modal */}
