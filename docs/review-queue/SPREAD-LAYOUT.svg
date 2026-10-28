@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1500" width="750" height="1500" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>prSpread and portal layout (Review Queue v0.3.2)</title>
+  <rect width="750" height="1500" fill="#0b0f19"/>
+  <text x="24" y="44" fill="#ffffff" font-size="28" font-weight="700">prSpread · Review Queue v0.3.2</text>
+  <text x="24" y="72" fill="#cbd5e1" font-size="18">Tablet/desktop: 3×3, PR in the centre, all face-up</text>
+  <!-- band -->
+  <rect x="24" y="82" width="702" height="30" rx="6" fill="#450a0a" stroke="#ef4444" stroke-width="2"/>
+  <text x="40" y="104" fill="#ef4444" font-size="18" font-weight="700">▲ 2 RED</text>
+  <text x="140" y="104" fill="#ffb400" font-size="18" font-weight="700">◆ 3 AMBER</text>
+  <text x="560" y="104" fill="#cbd5e1" font-size="16">band ≥16 px</text>
+  <text x="40" y="132" fill="#e2e8f0" font-size="15" font-weight="700">✕ NO-MERGE · CHECK_FAILING</text>
+  <text x="560" y="132" fill="#94a3b8" font-size="14">verdict, derived</text>
+  <!-- grid: cells 226 wide, gap 12 -->
+  <g font-size="18">
+    <rect x="24" y="140" width="226" height="150" rx="10" fill="#111827" stroke="#ef4444" stroke-width="3"/>
+    <text x="38" y="168" fill="#fff" font-weight="700">1 · FLAGS 5</text>
+    <text x="38" y="196" fill="#ef4444">▲ CHECK_FAILING</text>
+    <text x="38" y="222" fill="#ef4444">▲ CHANGES_REQ</text>
+    <text x="38" y="248" fill="#ffb400">◆ BEHIND_BASE +2</text>
+    <rect x="262" y="140" width="226" height="150" rx="10" fill="#111827" stroke="#ef4444" stroke-width="3"/>
+    <text x="276" y="168" fill="#fff" font-weight="700">2 · CHECKS 2/3</text>
+    <text x="276" y="196" fill="#ef4444">✗ e2e failure</text>
+    <text x="276" y="222" fill="#34d399">✓ build</text>
+    <text x="276" y="276" fill="#94a3b8" font-size="15">required view</text>
+    <rect x="500" y="140" width="226" height="150" rx="10" fill="#111827" stroke="#ef4444" stroke-width="3"/>
+    <text x="514" y="168" fill="#fff" font-weight="700">3 · REVIEWS</text>
+    <text x="514" y="196" fill="#ef4444">▲ changes req 1</text>
+    <text x="514" y="222" fill="#cbd5e1">3 comments</text>
+    <text x="514" y="276" fill="#94a3b8" font-size="15">required view</text>
+
+    <rect x="24" y="302" width="226" height="250" rx="10" fill="#111827" stroke="#475569" stroke-width="2"/>
+    <text x="38" y="330" fill="#fff" font-weight="700">4 · ISSUES 2</text>
+    <text x="38" y="358" fill="#cbd5e1">#31 open</text>
+    <rect x="262" y="302" width="226" height="250" rx="10" fill="#1f2937" stroke="#ef4444" stroke-width="4"/>
+    <text x="276" y="330" fill="#fff" font-weight="700" font-size="20">0 · PULL REQUEST</text>
+    <text x="276" y="358" fill="#cbd5e1">repo#40 · +355/−24</text>
+    <text x="276" y="386" fill="#ef4444">▲ flags list</text>
+    <text x="276" y="410" fill="#94a3b8" font-size="15">(replaces the art)</text>
+    <text x="276" y="450" fill="#fff" font-weight="700" font-size="16">RISK 99</text>
+    <text x="276" y="474" fill="#fff" font-weight="700" font-size="16">VERIFIED 67%</text>
+    <text x="276" y="498" fill="#fff" font-weight="700" font-size="16">DUE 3d</text>
+    <text x="276" y="536" fill="#94a3b8" font-size="15">chips: blocked · M · labels</text>
+    <rect x="500" y="302" width="226" height="250" rx="10" fill="#111827" stroke="#475569" stroke-width="2"/>
+    <text x="514" y="330" fill="#fff" font-weight="700">5 · STACK</text>
+    <text x="514" y="358" fill="#cbd5e1">parent #38</text>
+
+    <rect x="24" y="564" width="226" height="120" rx="10" fill="#111827" stroke="#475569" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="38" y="592" fill="#fff" font-weight="700">6 · REPO FILES</text>
+    <text x="38" y="620" fill="#94a3b8">not fetched</text>
+    <rect x="262" y="564" width="226" height="120" rx="10" fill="#111827" stroke="#475569" stroke-width="2"/>
+    <text x="276" y="592" fill="#fff" font-weight="700">7 · FILES 10</text>
+    <text x="276" y="620" fill="#cbd5e1">src (4) · tests (3)</text>
+    <rect x="500" y="564" width="226" height="120" rx="10" fill="#111827" stroke="#475569" stroke-width="2"/>
+    <text x="514" y="592" fill="#fff" font-weight="700">8 · MORE +2</text>
+    <text x="514" y="620" fill="#cbd5e1">overflow groups</text>
+  </g>
+  <text x="24" y="712" fill="#cbd5e1" font-size="16">Worst first · top 3 on the face · max 9 positions · no pulse</text>
+
+  <!-- phone -->
+  <text x="24" y="756" fill="#ffffff" font-size="22" font-weight="700">Phone 375 px: PR card + rows</text>
+  <rect x="24" y="772" width="300" height="700" rx="26" fill="#111827" stroke="#64748b" stroke-width="2"/>
+  <rect x="40" y="796" width="268" height="36" rx="6" fill="#450a0a" stroke="#ef4444" stroke-width="2"/>
+  <text x="50" y="820" fill="#ef4444" font-size="17" font-weight="700">▲ 2 RED</text>
+  <text x="140" y="820" fill="#ffb400" font-size="17" font-weight="700">◆ 3 AMBER</text>
+  <text x="44" y="854" fill="#e2e8f0" font-size="15" font-weight="700">✕ NO-MERGE · CHECK_FAILING</text>
+  <text x="44" y="878" fill="#fff" font-size="15" font-weight="700">RISK 99 · VERIF 67% · DUE 3d</text>
+  <rect x="64" y="892" width="220" height="228" rx="10" fill="#1f2937" stroke="#ef4444" stroke-width="4"/>
+  <text x="78" y="922" fill="#fff" font-size="17" font-weight="700">PR card</text>
+  <text x="78" y="948" fill="#cbd5e1" font-size="15">repo#40 · M</text>
+  <text x="78" y="974" fill="#ef4444" font-size="15">▲ flags list</text>
+  <text x="44" y="1146" fill="#94a3b8" font-size="14">Read-only preview (phase 0)</text>
+  <g font-size="16" fill="#e5e7eb">
+    <rect x="40" y="1160" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1186">▲ Flags · 5</text>
+    <rect x="40" y="1204" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1230">✗ Checks · 2/3</text>
+    <rect x="40" y="1248" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1274">▲ Reviews · 1 chg</text>
+    <rect x="40" y="1292" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1318">↕ Stack · #38</text>
+    <rect x="40" y="1336" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1362"># Issues · 2</text>
+    <rect x="40" y="1380" width="268" height="40" rx="6" fill="#0f172a"/><text x="52" y="1406">≡ Files · 10</text>
+    <rect x="40" y="1424" width="268" height="36" rx="6" fill="#0f172a"/><text x="52" y="1448">… More · +2</text>
+  </g>
+
+  <!-- portal -->
+  <text x="346" y="756" fill="#ffffff" font-size="22" font-weight="700">Portal (tap any card)</text>
+  <rect x="346" y="772" width="380" height="700" rx="14" fill="#111827" stroke="#ef4444" stroke-width="3"/>
+  <rect x="362" y="788" width="348" height="34" rx="6" fill="#450a0a"/>
+  <text x="372" y="811" fill="#ef4444" font-size="17" font-weight="700">▲ 2 RED · ◆ 3 AMBER</text>
+  <text x="362" y="844" fill="#e2e8f0" font-size="15" font-weight="700">✕ NO-MERGE · CHECK_FAILING, CHANGES_REQ</text>
+  <text x="362" y="870" fill="#fff" font-size="17" font-weight="700">Title ≤80 · chips ≤24</text>
+  <text x="362" y="894" fill="#cbd5e1" font-size="15">Flags ≤120 each + [source]</text>
+  <text x="362" y="914" fill="#cbd5e1" font-size="15">Summary ≤3 × 140 + [source]</text>
+  <text x="362" y="934" fill="#cbd5e1" font-size="15">Key facts ≤8 rows, linked</text>
+  <text x="362" y="964" fill="#fff" font-size="17" font-weight="700">References (URL buttons)</text>
+  <g font-size="15" fill="#e0f2fe">
+    <rect x="362" y="976" width="100" height="34" rx="6" fill="#0c4a6e"/><text x="374" y="999">PR ↗</text>
+    <rect x="470" y="976" width="110" height="34" rx="6" fill="#0c4a6e"/><text x="482" y="999">Checks ↗</text>
+    <rect x="588" y="976" width="122" height="34" rx="6" fill="#0c4a6e"/><text x="600" y="999">Files ↗</text>
+    <rect x="362" y="1018" width="130" height="34" rx="6" fill="#0c4a6e"/><text x="374" y="1041">Commits ↗</text>
+    <rect x="500" y="1018" width="210" height="34" rx="6" fill="#0c4a6e"/><text x="512" y="1041">Compare base…head ↗</text>
+    <rect x="362" y="1060" width="150" height="34" rx="6" fill="#0c4a6e"/><text x="374" y="1083">Issue #31 ↗</text>
+    <rect x="520" y="1060" width="190" height="34" rx="6" fill="#0c4a6e"/><text x="532" y="1083">Stack #38 ↗</text>
+    <rect x="362" y="1102" width="348" height="34" rx="6" fill="#0c4a6e"/><text x="374" y="1125">Sidecar file @head_sha ↗</text>
+  </g>
+  <text x="362" y="1166" fill="#94a3b8" font-size="15">▸ More (≤10, then +N on GitHub)</text>
+  <text x="362" y="1196" fill="#94a3b8" font-size="15">Plain text only · links in text never buttons</text>
+  <line x1="362" y1="1216" x2="710" y2="1216" stroke="#334155"/>
+  <text x="362" y="1246" fill="#fff" font-size="16" font-weight="700">Phase 0: no buttons</text>
+  <text x="362" y="1270" fill="#cbd5e1" font-size="15">"Read-only preview: decisions</text>
+  <text x="362" y="1290" fill="#cbd5e1" font-size="15">arrive in phase 1"</text>
+  <text x="362" y="1326" fill="#fff" font-size="16" font-weight="700">Phase 1 action bar</text>
+  <g font-size="15">
+    <rect x="362" y="1340" width="80" height="36" rx="6" fill="#1f2937"/><text x="372" y="1364" fill="#e5e7eb">Reject</text>
+    <rect x="450" y="1340" width="84" height="36" rx="6" fill="#1f2937"/><text x="460" y="1364" fill="#e5e7eb">Snooze</text>
+    <rect x="542" y="1340" width="168" height="36" rx="6" fill="#1f2937"/><text x="552" y="1364" fill="#e5e7eb">Request changes</text>
+    <rect x="362" y="1384" width="348" height="40" rx="6" fill="#1f2937" stroke="#475569" stroke-dasharray="4 3"/><text x="376" y="1410" fill="#94a3b8" font-weight="700">SEAL off · CHECK_FAILING, CHANGES_REQ</text>
+  </g>
+  <text x="362" y="1450" fill="#94a3b8" font-size="14">WebAuthn · 60 s undo · bot never merges unasked</text>
+  <text x="362" y="1472" fill="#94a3b8" font-size="14">Snooze: 1 h · localTonight · localTomorrow</text>
+</svg>
