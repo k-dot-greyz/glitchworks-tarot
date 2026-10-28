@@ -1,0 +1,48 @@
+[
+  {
+    "id": 4263985654,
+    "node_id": "PRR_xCxxQFKWZBTM9Pb6",
+    "user": {
+      "login": "example-reviewer",
+      "id": 54973232,
+      "node_id": "U_CvUv0ClkhEkyRI5q",
+      "avatar_url": "",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/example-reviewer",
+      "html_url": "https://github.com/example-reviewer",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "One nit on the test name.",
+    "state": "COMMENTED",
+    "html_url": "https://github.com/example-org/example-repo/pull/149#pullrequestreview-4263985654",
+    "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/149",
+    "author_association": "MEMBER",
+    "submitted_at": "2026-10-20T10:05:00Z",
+    "commit_id": "570c7ca1fd9cf7947dd16be177a54ec7b94fca0c"
+  },
+  {
+    "id": 5079904723,
+    "node_id": "PRR_CYzukUPdjaUo0HC3",
+    "user": {
+      "login": "example-reviewer",
+      "id": 54973232,
+      "node_id": "U_nhdiYK2yOVrsWYGt",
+      "avatar_url": "",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/example-reviewer",
+      "html_url": "https://github.com/example-reviewer",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Looks good.",
+    "state": "APPROVED",
+    "html_url": "https://github.com/example-org/example-repo/pull/149#pullrequestreview-5079904723",
+    "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/149",
+    "author_association": "MEMBER",
+    "submitted_at": "2026-10-20T11:25:00Z",
+    "commit_id": "570c7ca1fd9cf7947dd16be177a54ec7b94fca0c"
+  }
+]

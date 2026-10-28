@@ -1,0 +1,19 @@
+{
+  "_derived": true,
+  "synthetic": true,
+  "note": "Not an API response. SYNTHETIC fixtures for a fictional repo; every title, login, branch, SHA and id is made up. snapshot_at is used as \"now\" for PR age so the view is deterministic.",
+  "repo": "example-org/example-repo",
+  "repo_html_url": "https://github.com/example-org/example-repo",
+  "source_label": "synthetic fixtures",
+  "default_branch": "main",
+  "protected_branches": [
+    "main"
+  ],
+  "snapshot_at": "2026-10-20T12:00:00Z",
+  "prs": [
+    142,
+    145,
+    147,
+    149
+  ]
+}

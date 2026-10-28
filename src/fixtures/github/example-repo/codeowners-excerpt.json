@@ -1,0 +1,18 @@
+{
+  "_derived": true,
+  "source": "Synthetic. Shaped like the decoded GET /repos/{owner}/{repo}/contents/.github/CODEOWNERS (default branch), exact-path lines only.",
+  "html_url": "https://github.com/example-org/example-repo/blob/main/.github/CODEOWNERS",
+  "header": [
+    "# Synthetic CODEOWNERS for example-org/example-repo (fictional)"
+  ],
+  "lines": [
+    "src/cli/config.js @example-org/cli-maintainers",
+    "src/cli/config.test.js @example-org/cli-maintainers",
+    "src/storage/index.js @example-org/storage-maintainers",
+    "src/storage/adapters/base.js @example-org/storage-maintainers",
+    "src/widgets/registry.js @example-org/widget-maintainers",
+    "docs/api/README.md @example-org/docs-team",
+    ".github/workflows/ci.yml @example-org/infra"
+  ],
+  "total_lines": 8
+}

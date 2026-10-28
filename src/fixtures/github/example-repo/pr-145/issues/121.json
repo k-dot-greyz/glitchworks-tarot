@@ -1,0 +1,50 @@
+{
+  "url": "https://api.github.com/repos/example-org/example-repo/issues/121",
+  "repository_url": "https://api.github.com/repos/example-org/example-repo",
+  "labels_url": "https://api.github.com/repos/example-org/example-repo/issues/121/labels{/name}",
+  "comments_url": "https://api.github.com/repos/example-org/example-repo/issues/121/comments",
+  "events_url": "https://api.github.com/repos/example-org/example-repo/issues/121/events",
+  "html_url": "https://github.com/example-org/example-repo/issues/121",
+  "id": 9727445471,
+  "node_id": "I_SdM1rq7hyqSA3EE4",
+  "number": 121,
+  "title": "Duplicate rows when a page boundary falls on equal sort keys",
+  "user": {
+    "login": "example-reviewer",
+    "id": 54973232,
+    "node_id": "U_y1qr9T03CJgyO1ye",
+    "avatar_url": "",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/example-reviewer",
+    "html_url": "https://github.com/example-reviewer",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 9673405871,
+      "node_id": "LA_FSx2DYiutOdQqqrv",
+      "url": "https://api.github.com/repos/example-org/example-repo/labels/bug",
+      "name": "bug",
+      "description": null,
+      "color": "d73a4a",
+      "default": true
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignees": [],
+  "milestone": null,
+  "comments": 2,
+  "created_at": "2026-09-30T14:20:00Z",
+  "updated_at": "2026-10-09T11:00:00Z",
+  "closed_at": "2026-10-09T11:00:00Z",
+  "assignee": null,
+  "author_association": "MEMBER",
+  "active_lock_reason": null,
+  "body": "Repro: sort by updated_at with ties at the page edge.",
+  "closed_by": null,
+  "timeline_url": "https://api.github.com/repos/example-org/example-repo/issues/121/timeline",
+  "state_reason": "completed"
+}
