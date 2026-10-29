@@ -29,6 +29,7 @@ import { usePersistedDeck } from './hooks/usePersistedDeck.js';
 import { resolveBattleWithEngine, arenaModes } from './domain/battleEngine.js';
 import { rulesets } from './domain/rulesets.js';
 import { drawSpread } from './domain/deckState.js';
+import { applyCombatDamage, DUEL_CONFIG } from './domain/duelLp.js';
 import { createLocalStorageDeckStorage } from './adapters/localStorageDeckStorage.js';
 import { createConsoleTelemetry } from './adapters/consoleTelemetry.js';
 
@@ -82,6 +83,9 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const [battleLog, setBattleLog] = useState("[ WAITING FOR DATA INPUT ]");
   const [isClashing, setIsClashing] = useState(false);
   const [arenaMode, setArenaMode] = useState('standard');
+  const [p1Lp, setP1Lp] = useState(DUEL_CONFIG.startingLp);
+  const [p2Lp, setP2Lp] = useState(DUEL_CONFIG.startingLp);
+  const [duelOver, setDuelOver] = useState(false);
 
   // Oracle State
   const [spread, setSpread] = useState([]);
@@ -121,6 +125,9 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
       initialSlots[zone.id] = null;
     });
     setArenaSlots(initialSlots);
+    setP1Lp(DUEL_CONFIG.startingLp);
+    setP2Lp(DUEL_CONFIG.startingLp);
+    setDuelOver(false);
     setBattleLog(
       arenaMode === 'combatDisabled'
         ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
@@ -185,7 +192,26 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
         arenaMode,
         arenaRuleset
       );
-      setBattleLog(result.logLine);
+
+      const damageResult = applyCombatDamage(
+        { p1Lp, p2Lp },
+        { ...result, p1, p2 },
+      );
+
+      setP1Lp(damageResult.p1Lp);
+      setP2Lp(damageResult.p2Lp);
+      setDuelOver(damageResult.gameOver);
+
+      const damageNote = damageResult.damage === 'LETHAL'
+        ? ' [EXODIA LETHAL]'
+        : damageResult.damage > 0
+          ? ` [-${damageResult.damage} LP]`
+          : '';
+      const endNote = damageResult.gameOver
+        ? ` >> DUEL OVER — ${damageResult.loser === 'p2' ? 'PLAYER B' : 'PLAYER A'} LP 0`
+        : '';
+
+      setBattleLog(`${result.logLine}${damageNote}${endNote}`);
       setIsClashing(false);
     }, 600);
   };
@@ -466,6 +492,20 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
           <p className="text-white/40 font-mono text-[10px]">
             {activeRuleset.name.toUpperCase()} ACTIVE
           </p>
+          <div className="flex items-center justify-center gap-6 mt-2 font-mono text-xs">
+            <span data-testid="aether-arena-lp-p1" className={p1Lp <= 0 ? 'text-red-500' : 'text-emerald-400'}>
+              P1 LP {p1Lp}
+            </span>
+            <span className="text-white/30">|</span>
+            <span data-testid="aether-arena-lp-p2" className={p2Lp <= 0 ? 'text-red-500' : 'text-emerald-400'}>
+              P2 LP {p2Lp}
+            </span>
+            {duelOver && (
+              <span data-testid="aether-arena-duel-over" className="text-red-400 tracking-widest">
+                DUEL OVER
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Playmat Grid */}
