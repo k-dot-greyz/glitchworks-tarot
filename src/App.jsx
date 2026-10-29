@@ -170,6 +170,11 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
     }
   };
 
+  /**
+   * Resolve the current clash. Guards on missing cards, in-flight clash,
+   * duel already over, or combat-disabled mode. Invalidates the pending
+   * callback if the ruleset changes before the 600ms resolve.
+   */
   const handleResolveBattle = () => {
     const activeRuleset = rulesets[arenaRuleset] || rulesets.standard;
     const clashSlots = activeRuleset.clashSlots;

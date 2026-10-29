@@ -234,7 +234,10 @@
       return win.eval(`(${fn.toString()})()`);
     }
 
-    async function runStep(step) {
+    let playToken = 0;
+
+    async function runStep(step, token) {
+      if (token !== playToken) return;
       statusEl.textContent = step.label;
       const doc = iframe.contentDocument;
       if (!doc) return;
@@ -242,6 +245,7 @@
       if (step.action === 'start') {
         doc.querySelector('[data-testid="aether-nav-arena"]')?.click();
         await sleep(400);
+        if (token !== playToken) return;
         const sel = doc.querySelector('[data-testid="aether-arena-ruleset-select"]');
         if (sel) { sel.value = 'yugioh'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
         await sleep(400);
@@ -257,8 +261,8 @@
         doc.querySelector('[data-testid="aether-arena-flush"]')?.click();
         await sleep(300);
       }
+      if (token !== playToken) return;
 
-      // Refresh overlay
       const log = doc.querySelector('[data-testid="aether-arena-log"]')?.innerText || '—';
       const lp1 = doc.querySelector('[data-testid="aether-arena-lp-p1"]')?.innerText || '—';
       const lp2 = doc.querySelector('[data-testid="aether-arena-lp-p2"]')?.innerText || '—';
@@ -270,12 +274,15 @@
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
     async function jumpTo(i) {
-      // For demo simplicity, reset and replay up to i
+      const token = ++playToken;
+      playing = false;
       current = 0;
       iframe.src = '/';
       await sleep(1200);
+      if (token !== playToken) return;
       while (current <= i) {
-        await runStep(STEPS[current]);
+        if (token !== playToken) return;
+        await runStep(STEPS[current], token);
         updatePlayhead();
         renderTimeline();
         current++;
@@ -286,48 +293,60 @@
     }
 
     async function playFrom(start) {
+      const token = ++playToken;
       playing = true;
       document.getElementById('btn-play').textContent = '⏸ PAUSE';
       let i = start;
-      while (playing) {
+      while (playing && token === playToken) {
         if (i >= STEPS.length) {
           if (loopStart !== null && loopEnd !== null) {
             i = Math.min(loopStart, loopEnd);
             iframe.src = '/';
             await sleep(1200);
-            // re-run prefix up to loop start
-            for (let k = 0; k < i; k++) await runStep(STEPS[k]);
+            if (token !== playToken) break;
+            for (let k = 0; k < i; k++) {
+              if (token !== playToken) break;
+              await runStep(STEPS[k], token);
+            }
           } else {
             playing = false;
             break;
           }
         }
+        if (token !== playToken) break;
         current = i;
         updatePlayhead();
         renderTimeline();
-        await runStep(STEPS[i]);
+        await runStep(STEPS[i], token);
         i++;
         if (loopStart !== null && loopEnd !== null && i > Math.max(loopStart, loopEnd)) {
           i = Math.min(loopStart, loopEnd);
           iframe.src = '/';
           await sleep(1200);
-          for (let k = 0; k < i; k++) await runStep(STEPS[k]);
+          for (let k = 0; k < i; k++) {
+            if (token !== playToken) break;
+            await runStep(STEPS[k], token);
+          }
         }
         await sleep(200);
       }
-      document.getElementById('btn-play').textContent = '▶ PLAY';
-      statusEl.textContent = 'paused';
+      if (token === playToken) {
+        document.getElementById('btn-play').textContent = '▶ PLAY';
+        statusEl.textContent = 'paused';
+      }
     }
 
     document.getElementById('btn-play').onclick = () => {
-      if (playing) { playing = false; return; }
+      if (playing) { playing = false; playToken++; return; }
       const start = (loopStart !== null && loopEnd !== null) ? Math.min(loopStart, loopEnd) : current;
       playFrom(start);
     };
     document.getElementById('btn-step').onclick = async () => {
-      if (playing) return; // don't overlap with PLAY
+      if (playing) return;
+      const token = playToken;
       if (current >= STEPS.length) current = 0;
-      await runStep(STEPS[current]);
+      await runStep(STEPS[current], token);
+      if (token !== playToken) return;
       updatePlayhead();
       renderTimeline();
       current++;
@@ -338,6 +357,7 @@
       updateLoopUI();
     };
     document.getElementById('btn-reset').onclick = () => {
+      playToken++;
       playing = false;
       current = 0;
       loopStart = null;

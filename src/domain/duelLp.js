@@ -12,6 +12,13 @@ export const DUEL_CONFIG = {
   lethalAbility: 'exodia',
 };
 
+/**
+ * True if the card triggers lethal damage on resolve.
+ * Checks id list, ability, then name pattern (case-insensitive).
+ * @param {object|null} card
+ * @param {object} [config]
+ * @returns {boolean}
+ */
 export function isLethalCard(card, config = DUEL_CONFIG) {
   if (!card) return false;
   if (config.lethalCardIds.includes(card.id)) return true;
@@ -22,7 +29,12 @@ export function isLethalCard(card, config = DUEL_CONFIG) {
 
 /**
  * Apply combat damage for a resolved clash.
- * Returns updated LP pair, damage dealt, and whether the duel ended.
+ * Lethal winner forces loser LP to 0; otherwise subtracts the score delta
+ * and clamps at 0. Game ends when either LP is <= 0.
+ * @param {{p1Lp:number,p2Lp:number}} lp
+ * @param {{winner:'p1'|'p2'|null,p1Score?:number,p2Score?:number,p1?:object,p2?:object}} battle
+ * @param {object} [config]
+ * @returns {{p1Lp:number,p2Lp:number,damage:number|'LETHAL',gameOver:boolean,loser:'p1'|'p2'|null}}
  */
 export function applyCombatDamage(
   { p1Lp, p2Lp },
