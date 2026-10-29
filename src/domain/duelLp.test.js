@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isLethalCard, applyCombatDamage, DUEL_CONFIG } from './duelLp.js';
+import { isLethalCard, applyCombatDamage } from './duelLp.js';
 
 describe('duelLp', () => {
   const glitch = { id: '404', name: 'The Glitch', ability: 'none' };
