@@ -63,31 +63,39 @@ jobs:
 
   deploy:
     needs: [build, e2e]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.DEPLOY_HOST != ''
+    # secrets context is not available in jobs.<id>.if (github/needs/vars/inputs only).
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     environment: production
+    env:
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
     steps:
       - name: Checkout code
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Download build artifacts
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         uses: actions/download-artifact@v4
         with:
           name: production-build
           path: build/
       - name: Deploy to Production Server
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         run: |
-          rsync -av --delete build/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+          rsync -av --delete build/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
       - name: Notify Linear
-        if: secrets.LINEAR_API_KEY != ''
+        if: env.LINEAR_API_KEY != '' && env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Authorization: Bearer $LINEAR_API_KEY" \
             -d '{"event": "deploy", "branch": "${{ github.ref }}"}' \
             https://api.linear.app/webhooks/deployment
+      - name: Skip deploy when secrets are unset
+        if: env.DEPLOY_HOST == '' || env.DEPLOY_USER == '' || env.DEPLOY_PATH == ''
+        run: echo "DEPLOY_* secrets not configured; skipping production deploy."

@@ -24,6 +24,7 @@ npm run build && npm run preview   # http://localhost:4173
 | Doc | Purpose |
 |-----|---------|
 | [`docs/SPEC.md`](docs/SPEC.md) | Where the **full v2.1 product spec** lives (dev-master path + pointers) |
+| [`docs/KERNEL.md`](docs/KERNEL.md) | **Proposed** rules kernel — Rust core, JSON packs, TypeScript display only. Not implemented. |
 | [`docs/TESTING.md`](docs/TESTING.md) | **Testing methodology** — Vitest, Playwright, CI, commands |
 | [`docs/TESTIDS.md`](docs/TESTIDS.md) | `data-testid` convention for RTL + E2E |
 | [`docs/AETHER_RAM.ipynb`](docs/AETHER_RAM.ipynb) | Agent / session RAM + optional test run log cells |
