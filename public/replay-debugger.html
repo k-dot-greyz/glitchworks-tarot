@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aether Replay Loop Debugger — Rocksmith mode</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --panel: #12121a;
+      --accent: #00f0ff;
+      --accent2: #ff2d95;
+      --ok: #00ff9d;
+      --warn: #ffb800;
+      --text: #e8e8f0;
+      --muted: #6a6a80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header {
+      padding: 10px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 14px; margin: 0; letter-spacing: 0.15em; color: var(--accent); }
+    header .badge { font-size: 10px; padding: 2px 8px; border: 1px solid var(--accent2); color: var(--accent2); border-radius: 99px; }
+    #stage {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 0;
+    }
+    #timeline {
+      background: var(--panel);
+      border-right: 1px solid #222;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .step {
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-left: 3px solid #333;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .step.active { border-left-color: var(--accent); background: #1a1a28; }
+    .step.looped { border-left-color: var(--accent2); }
+    .step .label { color: var(--text); }
+    .step .meta { color: var(--muted); font-size: 10px; }
+    #viewport {
+      position: relative;
+      background: #000;
+    }
+    #viewport iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid var(--accent);
+      padding: 8px 12px;
+      font-size: 11px;
+      pointer-events: none;
+    }
+    #overlay .lp { color: var(--ok); }
+    footer {
+      background: var(--panel);
+      border-top: 1px solid #222;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    button {
+      background: #1a1a28;
+      color: var(--text);
+      border: 1px solid #333;
+      padding: 6px 12px;
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
+    button.loop { border-color: var(--accent2); color: var(--accent2); }
+    #highway {
+      flex: 1;
+      height: 36px;
+      background: #0d0d14;
+      border: 1px solid #222;
+      position: relative;
+      overflow: hidden;
+    }
+    #highway .marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+    }
+    #highway .loop-region {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(255, 45, 149, 0.25);
+      border-left: 1px solid var(--accent2);
+      border-right: 1px solid var(--accent2);
+    }
+    #status { font-size: 11px; color: var(--muted); min-width: 180px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AETHER REPLAY LOOP</h1>
+    <span class="badge">ROCKSMITH MODE</span>
+    <span id="status">idle</span>
+  </header>
+
+  <div id="stage">
+    <div id="timeline"></div>
+    <div id="viewport">
+      <iframe id="app" src="/"></iframe>
+      <div id="overlay">
+        <div>LOG <span id="ov-log">—</span></div>
+        <div class="lp">P1 <span id="ov-lp1">8000</span> &nbsp; P2 <span id="ov-lp2">8000</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <button id="btn-play" class="primary">▶ PLAY</button>
+    <button id="btn-step">STEP</button>
+    <button id="btn-loop" class="loop">LOOP REGION</button>
+    <button id="btn-reset">RESET</button>
+    <div id="highway">
+      <div class="loop-region" id="loop-region" style="display:none"></div>
+      <div class="marker" id="playhead" style="left:0"></div>
+    </div>
+    <span id="loop-label" style="font-size:10px;color:var(--muted)">no loop</span>
+  </footer>
+
+  <script>
+    const STEPS = [
+      { id: 'start', label: 'Start — enter Arena, select Yu-Gi-Oh', action: 'start' },
+      { id: 'r1-place-a', label: 'R1 — Player A: The Magician', action: 'place', card: 'The Magician' },
+      { id: 'r1-place-b', label: 'R1 — Player B: The Fool', action: 'place', card: 'The Fool' },
+      { id: 'r1-clash', label: 'R1 — Clash (Magician overwrites)', action: 'clash' },
+      { id: 'r1-flush', label: 'R1 — Flush', action: 'flush' },
+      { id: 'r2-place-a', label: 'R2 — Player A: The Chariot', action: 'place', card: 'The Chariot' },
+      { id: 'r2-place-b', label: 'R2 — Player B: High Priestess', action: 'place', card: 'High Priestess' },
+      { id: 'r2-clash', label: 'R2 — Clash (Chariot + type adv)', action: 'clash' },
+      { id: 'r2-flush', label: 'R2 — Flush', action: 'flush' },
+      { id: 'r3-place-a', label: 'R3 — Player A: The Glitch (Exodia)', action: 'place', card: 'The Glitch' },
+      { id: 'r3-place-b', label: 'R3 — Player B: The Fool', action: 'place', card: 'The Fool' },
+      { id: 'r3-clash', label: 'R3 — Clash → EXODIA LETHAL / DUEL OVER', action: 'clash' },
+    ];
+
+    const timelineEl = document.getElementById('timeline');
+    const statusEl = document.getElementById('status');
+    const playhead = document.getElementById('playhead');
+    const loopRegion = document.getElementById('loop-region');
+    const loopLabel = document.getElementById('loop-label');
+    const iframe = document.getElementById('app');
+
+    let current = 0;
+    let playing = false;
+    let loopStart = null;
+    let loopEnd = null;
+    let timer = null;
+
+    function renderTimeline() {
+      timelineEl.innerHTML = STEPS.map((s, i) => `
+        <div class="step ${i === current ? 'active' : ''} ${isInLoop(i) ? 'looped' : ''}" data-i="${i}">
+          <div class="label">${s.label}</div>
+          <div class="meta">${s.action}${s.card ? ' · ' + s.card : ''}</div>
+        </div>
+      `).join('');
+      timelineEl.querySelectorAll('.step').forEach(el => {
+        el.addEventListener('click', () => {
+          const i = Number(el.dataset.i);
+          if (loopStart === null) loopStart = i;
+          else if (loopEnd === null) loopEnd = i;
+          else { loopStart = i; loopEnd = null; }
+          updateLoopUI();
+          jumpTo(i);
+        });
+      });
+    }
+
+    function isInLoop(i) {
+      if (loopStart === null || loopEnd === null) return false;
+      const a = Math.min(loopStart, loopEnd);
+      const b = Math.max(loopStart, loopEnd);
+      return i >= a && i <= b;
+    }
+
+    function updateLoopUI() {
+      if (loopStart !== null && loopEnd !== null) {
+        const a = Math.min(loopStart, loopEnd);
+        const b = Math.max(loopStart, loopEnd);
+        const pct = (i) => (i / (STEPS.length - 1)) * 100;
+        loopRegion.style.display = 'block';
+        loopRegion.style.left = pct(a) + '%';
+        loopRegion.style.width = (pct(b) - pct(a)) + '%';
+        loopLabel.textContent = `loop ${a + 1}–${b + 1}`;
+      } else {
+        loopRegion.style.display = 'none';
+        loopLabel.textContent = loopStart !== null ? `loop start @ ${loopStart + 1}` : 'no loop';
+      }
+      renderTimeline();
+    }
+
+    function updatePlayhead() {
+      const pct = (current / (STEPS.length - 1)) * 100;
+      playhead.style.left = pct + '%';
+    }
+
+    async function appEval(fn) {
+      const win = iframe.contentWindow;
+      return win.eval(`(${fn.toString()})()`);
+    }
+
+    let playToken = 0;
+
+    async function runStep(step, token) {
+      if (token !== playToken) return;
+      statusEl.textContent = step.label;
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      if (step.action === 'start') {
+        doc.querySelector('[data-testid="aether-nav-arena"]')?.click();
+        await sleep(400);
+        if (token !== playToken) return;
+        const sel = doc.querySelector('[data-testid="aether-arena-ruleset-select"]');
+        if (sel) { sel.value = 'yugioh'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+        await sleep(400);
+      } else if (step.action === 'place') {
+        const headings = Array.from(doc.querySelectorAll('[data-testid="aether-view-arena"] h3, [data-testid="aether-view-arena"] [class*="font-serif"]'));
+        const h = headings.find(el => el.textContent.trim().toUpperCase() === step.card.toUpperCase());
+        if (h) (h.closest('.cursor-pointer') || h).click();
+        await sleep(300);
+      } else if (step.action === 'clash') {
+        doc.querySelector('[data-testid="aether-arena-clash"]')?.click();
+        await sleep(800);
+      } else if (step.action === 'flush') {
+        doc.querySelector('[data-testid="aether-arena-flush"]')?.click();
+        await sleep(300);
+      }
+      if (token !== playToken) return;
+
+      const log = doc.querySelector('[data-testid="aether-arena-log"]')?.innerText || '—';
+      const lp1 = doc.querySelector('[data-testid="aether-arena-lp-p1"]')?.innerText || '—';
+      const lp2 = doc.querySelector('[data-testid="aether-arena-lp-p2"]')?.innerText || '—';
+      document.getElementById('ov-log').textContent = log.slice(0, 60);
+      document.getElementById('ov-lp1').textContent = lp1.replace('P1 LP ', '');
+      document.getElementById('ov-lp2').textContent = lp2.replace('P2 LP ', '');
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function jumpTo(i) {
+      const token = ++playToken;
+      playing = false;
+      current = 0;
+      iframe.src = '/';
+      await sleep(1200);
+      if (token !== playToken) return;
+      while (current <= i) {
+        if (token !== playToken) return;
+        await runStep(STEPS[current], token);
+        updatePlayhead();
+        renderTimeline();
+        current++;
+      }
+      current = i;
+      updatePlayhead();
+      renderTimeline();
+    }
+
+    async function playFrom(start) {
+      const token = ++playToken;
+      playing = true;
+      document.getElementById('btn-play').textContent = '⏸ PAUSE';
+      let i = start;
+      while (playing && token === playToken) {
+        if (i >= STEPS.length) {
+          if (loopStart !== null && loopEnd !== null) {
+            i = Math.min(loopStart, loopEnd);
+            iframe.src = '/';
+            await sleep(1200);
+            if (token !== playToken) break;
+            for (let k = 0; k < i; k++) {
+              if (token !== playToken) break;
+              await runStep(STEPS[k], token);
+            }
+          } else {
+            playing = false;
+            break;
+          }
+        }
+        if (token !== playToken) break;
+        current = i;
+        updatePlayhead();
+        renderTimeline();
+        await runStep(STEPS[i], token);
+        i++;
+        if (loopStart !== null && loopEnd !== null && i > Math.max(loopStart, loopEnd)) {
+          i = Math.min(loopStart, loopEnd);
+          iframe.src = '/';
+          await sleep(1200);
+          for (let k = 0; k < i; k++) {
+            if (token !== playToken) break;
+            await runStep(STEPS[k], token);
+          }
+        }
+        await sleep(200);
+      }
+      if (token === playToken) {
+        document.getElementById('btn-play').textContent = '▶ PLAY';
+        statusEl.textContent = 'paused';
+      }
+    }
+
+    document.getElementById('btn-play').onclick = () => {
+      if (playing) { playing = false; playToken++; return; }
+      const start = (loopStart !== null && loopEnd !== null) ? Math.min(loopStart, loopEnd) : current;
+      playFrom(start);
+    };
+    document.getElementById('btn-step').onclick = async () => {
+      if (playing) return;
+      const token = playToken;
+      if (current >= STEPS.length) current = 0;
+      await runStep(STEPS[current], token);
+      if (token !== playToken) return;
+      updatePlayhead();
+      renderTimeline();
+      current++;
+    };
+    document.getElementById('btn-loop').onclick = () => {
+      if (loopStart === null) loopStart = 0;
+      if (loopEnd === null) loopEnd = STEPS.length - 1;
+      updateLoopUI();
+    };
+    document.getElementById('btn-reset').onclick = () => {
+      playToken++;
+      playing = false;
+      current = 0;
+      loopStart = null;
+      loopEnd = null;
+      iframe.src = '/';
+      document.getElementById('ov-log').textContent = '—';
+      document.getElementById('ov-lp1').textContent = '8000';
+      document.getElementById('ov-lp2').textContent = '8000';
+      updateLoopUI();
+      updatePlayhead();
+      statusEl.textContent = 'reset';
+    };
+
+    renderTimeline();
+    updatePlayhead();
+  </script>
+</body>
+</html>
