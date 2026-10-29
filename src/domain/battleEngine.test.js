@@ -4,6 +4,7 @@ import {
   elementalComponent,
   resolveBattleWithEngine
 } from './battleEngine.js';
+import { scoreFormulaRegistry } from './rulesets.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('battleEngine', () => {
@@ -147,6 +148,42 @@ describe('battleEngine', () => {
         expect(result.winner).toBe('p1');
         expect(result.p1Score).toBe(150);
         expect(result.p2Score).toBe(80);
+      });
+
+      it('applies pokemon ruleset scoring (ATK + SPD) with elemental multiplier', () => {
+        const result = resolveBattleWithEngine(
+          p1,
+          p2,
+          fixtures.arenaModes.standard,
+          fixtures.rulesetIds.pokemon,
+        );
+        expect(result.p1Score).toBe(105);
+        expect(result.p2Score).toBe(70);
+        expect(result.winner).toBe('p1');
+      });
+
+      it('RS-ABL-001 graceful ablation: unknown scoreFormula key falls back to arena base (ATK+SPD)', () => {
+        const key = 'mtg_power_toughness';
+        const original = scoreFormulaRegistry[key];
+        delete scoreFormulaRegistry[key];
+        try {
+          const baseline = resolveBattleWithEngine(
+            p1,
+            p2,
+            fixtures.arenaModes.standard,
+            fixtures.rulesetIds.standard,
+          );
+          const ablated = resolveBattleWithEngine(
+            p1,
+            p2,
+            fixtures.arenaModes.standard,
+            fixtures.rulesetIds.mtg,
+          );
+          expect(ablated.p1Score).toBe(baseline.p1Score);
+          expect(ablated.p2Score).toBe(baseline.p2Score);
+        } finally {
+          scoreFormulaRegistry[key] = original;
+        }
       });
 
       it('falls back safely when mode or ruleset id is injected/unknown', () => {

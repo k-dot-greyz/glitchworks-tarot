@@ -45,6 +45,14 @@ describe('rulesets', () => {
     }
   });
 
+  it('binds every playmat scoreFormula to a registry function (GW-AAP contract)', () => {
+    for (const id of requiredRulesetIds()) {
+      const key = rulesets[id].scoreFormula;
+      expect(typeof key).toBe('string');
+      expect(scoreFormulaRegistry[key]).toEqual(expect.any(Function));
+    }
+  });
+
   describe('scoreFormula (via scoreFormulaRegistry)', () => {
     it('standard ruleset scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
@@ -64,6 +72,11 @@ describe('rulesets', () => {
     it('pokemon ruleset scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
       expect(scoreFormulaRegistry[rulesets.pokemon.scoreFormula](card)).toBe(20);
+    });
+
+    it('RS-ABL-003 sad: missing stat fields yield NaN without throwing (graceful numeric failure)', () => {
+      const score = scoreFormulaRegistry[rulesets.yugioh.scoreFormula]({ stats: {} });
+      expect(Number.isNaN(score)).toBe(true);
     });
   });
 
