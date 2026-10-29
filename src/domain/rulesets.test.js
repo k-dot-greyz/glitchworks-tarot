@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rulesets } from './rulesets.js';
+import { rulesets, scoreFormulaRegistry } from './rulesets.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
 
 describe('rulesets', () => {
@@ -45,25 +45,25 @@ describe('rulesets', () => {
     }
   });
 
-  describe('calculateScore', () => {
+  describe('scoreFormula (via scoreFormulaRegistry)', () => {
     it('standard ruleset scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.standard.calculateScore(card)).toBe(20);
+      expect(scoreFormulaRegistry[rulesets.standard.scoreFormula](card)).toBe(20);
     });
 
     it('mtg ruleset scores ATK + DEF (power + toughness)', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.mtg.calculateScore(card)).toBe(17);
+      expect(scoreFormulaRegistry[rulesets.mtg.scoreFormula](card)).toBe(17);
     });
 
     it('yugioh ruleset scores ATK * 2', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.yugioh.calculateScore(card)).toBe(24);
+      expect(scoreFormulaRegistry[rulesets.yugioh.scoreFormula](card)).toBe(24);
     });
 
     it('pokemon ruleset scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(rulesets.pokemon.calculateScore(card)).toBe(20);
+      expect(scoreFormulaRegistry[rulesets.pokemon.scoreFormula](card)).toBe(20);
     });
   });
 
