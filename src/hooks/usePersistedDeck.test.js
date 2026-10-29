@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { usePersistedDeck } from './usePersistedDeck.js';
 import { createMemoryDeckStorage } from '../adapters/memoryDeckStorage.js';
 import { AetherTestFixtures } from '../test/fixtures/AetherTestFixtures.js';
+import { DefaultDeckHarness } from '../test/fixtures/DefaultDeckHarness.js';
 
 const forgeFallbackDeck = [
   {
@@ -130,6 +131,27 @@ describe('usePersistedDeck', () => {
       expect(() => JSON.parse(JSON.stringify(result.current.decks))).not.toThrow();
       unmount();
     }
+  });
+
+  it('falls back to the first deck when activeDeckId is orphaned', () => {
+    const deckHarness = new DefaultDeckHarness();
+    const { result } = renderPersistedDeck({
+      [deckHarness.multiDeckStorageKey]: deckHarness.orphanActiveDeckState(),
+    });
+
+    expect(result.current.activeDeckId).toBe('orphan-active-deck-id');
+    expect(result.current.deck).toEqual(deckHarness.shippedDeck);
+  });
+
+  it('hydrates legacy single-deck storage key before multi-deck migration', () => {
+    const deckHarness = new DefaultDeckHarness();
+    const legacyCards = deckHarness.shippedDeck.slice(0, 2);
+    const { result } = renderPersistedDeck({
+      [deckHarness.legacyStorageKey]: deckHarness.legacyDeckRaw(legacyCards),
+    });
+
+    expect(result.current.deck).toEqual(legacyCards);
+    expect(result.current.activeDeckId).toBe('default');
   });
 
   it('surfaces save quota failures through telemetry', () => {
