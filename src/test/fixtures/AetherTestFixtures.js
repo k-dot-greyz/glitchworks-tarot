@@ -58,6 +58,18 @@ export class AetherTestFixtures {
       combatDisabled: options.combatDisabledModeId ?? 'combatDisabled',
       unknown: options.unknownModeId ?? 'agentic-injection-mode',
     };
+
+    this.defaultDeckContract = {
+      expectedCardCount: options.expectedCardCount ?? 17,
+      anchorCardId: options.anchorCardId ?? '000',
+      anchorCardName: options.anchorCardName ?? 'The Fool',
+      bannedMtgExampleId: options.bannedMtgExampleId ?? '001',
+      forbiddenOverlayTokens: options.forbiddenOverlayTokens ?? [
+        'lastfm',
+        'last.fm',
+        'scrobble',
+      ],
+    };
   }
 
   validCard(overrides = {}) {
@@ -91,6 +103,35 @@ export class AetherTestFixtures {
         },
       ],
     };
+  }
+
+  orphanedActiveDeckPayload() {
+    const valid = this.validCard();
+    return JSON.stringify({
+      decks: [
+        {
+          id: 'default',
+          name: 'AETHER DECK',
+          deckBack: 'standard',
+          cards: [valid],
+        },
+      ],
+      activeDeckId: 'agentic-orphan-deck-id',
+    });
+  }
+
+  deckShellWithoutCardsArrayPayload() {
+    return JSON.stringify({
+      decks: [
+        {
+          id: 'default',
+          name: 'CORRUPTED',
+          deckBack: 'standard',
+          cards: 'not-an-array',
+        },
+      ],
+      activeDeckId: 'default',
+    });
   }
 
   maliciousStoredDeckPayloads() {

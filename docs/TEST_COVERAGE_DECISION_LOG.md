@@ -1,5 +1,49 @@
 # Test coverage decision log — agentic security pass
 
+## Pass — PR #23 CodeRabbit refactor + canonical deck (2026-09-12)
+
+**Branch:** `greyzxcursor/agentic-security-test-coverage-b61c`  
+**Trigger context:** PR #23 (`coderabbitai/autofix/a17c857`) — `scoreFormulaRegistry` serializable rulesets, persistence hardening, deps bump  
+**Supplements:** PR #24 (forge stale-closure), PR #25 (canonical `default_deck.json`)
+
+### Attack surface reviewed
+
+| Surface | Risk | Mitigation tested |
+|---------|------|-------------------|
+| `rulesets` embedded functions | Non-serializable rulesets break GW-AAP hydration | JSON round-trip + `scoreFormula` string keys only |
+| `scoreFormulaRegistry` injection | Unknown formula keys alter scoring | Registry lookup fail-closed; battleEngine falls back to base score |
+| Orphaned `activeDeckId` in storage | Wrong deck active / crash | `usePersistedDeck` normalizes to first valid deck |
+| Deck shell without `cards` array | Type confusion poisons state | Recovery to `fallbackDeck` with preserved deck metadata |
+| `default_deck.json` drift | Last.fm overlay or duplicate IDs ship to users | Contract tests: schema, unique ids, forbidden tokens |
+| Forge compile rapid-fire | Duplicate card IDs (stale closure) | RTL + Playwright double-compile uniqueness |
+
+### Test files added / updated
+
+| File | Change |
+|------|--------|
+| `src/domain/rulesets.test.js` | **Updated** — `scoreFormulaRegistry` + serializability |
+| `src/domain/battleEngine.test.js` | Pokemon ruleset scoring path |
+| `src/domain/defaultDeck.test.js` | **New** — canonical deck contract |
+| `src/hooks/usePersistedDeck.test.js` | Orphan `activeDeckId` + malformed deck shell |
+| `src/test/fixtures/AetherTestFixtures.js` | Default deck contract + persistence payloads |
+| `e2e/forge-security.spec.ts` | **New** — Forge compile UX (P0/P1) |
+
+### Playwright user stories (priority)
+
+1. **P0 — Forge compile:** Name entity → COMPILE → dex view → unique id in `aether-decks`.
+2. **P1 — Cosmetic reset:** Non-default frame/hat/rarity/ability → compile → return to forge → defaults restored.
+3. **P1 — Rapid compile:** Two compiles without manual flush → no duplicate card ids in storage.
+
+### Deferred follow-ups
+
+- JSON Schema for `default_deck.json` (structural drift vs `validateCard` only).
+- Runtime ruleset mutation / prototype pollution on `rulesets` object (low risk — module scope).
+- `Infinity` stat fuzzing in battle engine (product decision).
+
+---
+
+## Pass — PR #21 arena rulesets (2026-06-08)
+
 **Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
 **Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
 **Date:** 2026-06-08

@@ -106,6 +106,26 @@ describe('usePersistedDeck', () => {
     }).toThrow('Cannot set invalid deck');
   });
 
+  it('normalizes orphaned activeDeckId to first valid deck', () => {
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: fixtures.orphanedActiveDeckPayload(),
+    });
+
+    expect(result.current.activeDeckId).toBe('default');
+    expect(result.current.decks).toHaveLength(1);
+    expect(result.current.deck).toHaveLength(1);
+  });
+
+  it('recovers deck shells missing a cards array without crashing', () => {
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: fixtures.deckShellWithoutCardsArrayPayload(),
+    });
+
+    expect(result.current.activeDeckId).toBe('default');
+    expect(result.current.deck).toEqual(fallbackDeck);
+    expect(result.current.decks[0].name).toBe('CORRUPTED');
+  });
+
   it('ignores switchDeck to unknown deck ids (no state corruption)', () => {
     const persisted = fixtures.multiDeckState();
     const { result } = renderPersistedDeck({
