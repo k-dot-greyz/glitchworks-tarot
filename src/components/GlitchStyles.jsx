@@ -25,7 +25,7 @@ export const GlitchStyles = () => (
       pointer-events: none;
       position: fixed;
       inset: 0;
-      background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+      background-image: url('/noise.svg');
       opacity: var(--noise-opacity);
       z-index: 0;
       mix-blend-mode: multiply;
