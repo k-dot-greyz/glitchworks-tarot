@@ -133,7 +133,7 @@
   <div id="stage">
     <div id="timeline"></div>
     <div id="viewport">
-      <iframe id="app" src="http://localhost:5173/"></iframe>
+      <iframe id="app" src="/"></iframe>
       <div id="overlay">
         <div>LOG <span id="ov-log">—</span></div>
         <div class="lp">P1 <span id="ov-lp1">8000</span> &nbsp; P2 <span id="ov-lp2">8000</span></div>
@@ -272,7 +272,7 @@
     async function jumpTo(i) {
       // For demo simplicity, reset and replay up to i
       current = 0;
-      iframe.src = 'http://localhost:5173/';
+      iframe.src = '/';
       await sleep(1200);
       while (current <= i) {
         await runStep(STEPS[current]);
@@ -293,7 +293,7 @@
         if (i >= STEPS.length) {
           if (loopStart !== null && loopEnd !== null) {
             i = Math.min(loopStart, loopEnd);
-            iframe.src = 'http://localhost:5173/';
+            iframe.src = '/';
             await sleep(1200);
             // re-run prefix up to loop start
             for (let k = 0; k < i; k++) await runStep(STEPS[k]);
@@ -309,7 +309,7 @@
         i++;
         if (loopStart !== null && loopEnd !== null && i > Math.max(loopStart, loopEnd)) {
           i = Math.min(loopStart, loopEnd);
-          iframe.src = 'http://localhost:5173/';
+          iframe.src = '/';
           await sleep(1200);
           for (let k = 0; k < i; k++) await runStep(STEPS[k]);
         }
@@ -325,6 +325,7 @@
       playFrom(start);
     };
     document.getElementById('btn-step').onclick = async () => {
+      if (playing) return; // don't overlap with PLAY
       if (current >= STEPS.length) current = 0;
       await runStep(STEPS[current]);
       updatePlayhead();
@@ -341,7 +342,10 @@
       current = 0;
       loopStart = null;
       loopEnd = null;
-      iframe.src = 'http://localhost:5173/';
+      iframe.src = '/';
+      document.getElementById('ov-log').textContent = '—';
+      document.getElementById('ov-lp1').textContent = '8000';
+      document.getElementById('ov-lp2').textContent = '8000';
       updateLoopUI();
       updatePlayhead();
       statusEl.textContent = 'reset';

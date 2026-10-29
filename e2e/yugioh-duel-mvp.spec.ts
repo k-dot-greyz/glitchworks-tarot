@@ -120,7 +120,7 @@ test.describe('Yu-Gi-Oh! Duel MVP — start to finish', () => {
     );
 
     // ── END STATE ──────────────────────────────────────────
-    await expect(page.getByTestId(selectors.lpP2)).toHaveText(/0/);
+    await expect(page.getByTestId(selectors.lpP2)).toHaveText('P2 LP 0');
     await expect(page.getByTestId(selectors.duelOver)).toBeVisible();
     const finalLog = await page.getByTestId(selectors.log).innerText();
     expect(finalLog).toMatch(/THE GLITCH OVERWRITES THE FOOL/i);
@@ -128,7 +128,9 @@ test.describe('Yu-Gi-Oh! Duel MVP — start to finish', () => {
     expect(finalLog).toMatch(/DUEL OVER/i);
 
     // Filter sandbox 402 noise
-    const realErrors = errors.filter((e) => !e.includes('402'));
+    const realErrors = errors.filter(
+      (e) => !e.startsWith('Failed to load resource: the server responded with a status of 402'),
+    );
     expect(realErrors, `console errors: ${realErrors.join('\n')}`).toHaveLength(0);
   });
 });

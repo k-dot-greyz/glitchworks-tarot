@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import INITIAL_DECK from './default_deck.json';
 import {
   Sword,
@@ -86,6 +86,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
   const [p1Lp, setP1Lp] = useState(DUEL_CONFIG.startingLp);
   const [p2Lp, setP2Lp] = useState(DUEL_CONFIG.startingLp);
   const [duelOver, setDuelOver] = useState(false);
+  const clashGen = useRef(0);
 
   // Oracle State
   const [spread, setSpread] = useState([]);
@@ -128,6 +129,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
     setP1Lp(DUEL_CONFIG.startingLp);
     setP2Lp(DUEL_CONFIG.startingLp);
     setDuelOver(false);
+    clashGen.current += 1; // invalidate any pending clash callback
     setBattleLog(
       arenaMode === 'combatDisabled'
         ? '> SYSTEMS IN HARMONY. NO CLASH POSSIBLE.'
@@ -178,14 +180,17 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
       !p1 ||
       !p2 ||
       isClashing ||
+      duelOver ||
       arenaMode === 'combatDisabled'
     )
       return;
 
     setIsClashing(true);
     setBattleLog("[ ERR: DATA COLLISION DETECTED ]");
+    const gen = ++clashGen.current;
 
     setTimeout(() => {
+      if (gen !== clashGen.current) return; // ruleset changed; discard
       const result = resolveBattleWithEngine(
         p1,
         p2,
@@ -610,6 +615,7 @@ export default function App({ storage = defaultStorage, telemetry = defaultTelem
                   !p1ClashCard ||
                   !p2ClashCard ||
                   isClashing ||
+                  duelOver ||
                   arenaMode === 'combatDisabled'
                 }
                 className={`w-full md:w-auto px-6 py-2 rounded-none border border-transparent font-bold tracking-widest text-xs transition-all ${

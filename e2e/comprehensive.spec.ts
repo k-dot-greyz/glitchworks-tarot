@@ -249,7 +249,7 @@ test.describe('Yu-Gi-Oh! Duel MVP', () => {
     await clickBenchCard(page, 'The Fool');
     await resolveClash(page, /THE GLITCH OVERWRITES THE FOOL.*EXODIA LETHAL.*PLAYER B.*LP 0/i);
 
-    await expect(page.getByTestId(sel.lpP2)).toHaveText(/0/);
+    await expect(page.getByTestId(sel.lpP2)).toHaveText('P2 LP 0');
     await expect(page.getByTestId(sel.duelOver)).toBeVisible();
     const log = await page.getByTestId(sel.arenaLog).innerText();
     expect(log).toMatch(/EXODIA LETHAL/);

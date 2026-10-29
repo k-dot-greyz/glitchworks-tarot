@@ -9,7 +9,9 @@ test.describe('Aether deck — core flows', () => {
     await page.goto('/');
     await expect(page.getByTestId('aether-root')).toBeVisible();
     await expect(page.getByTestId('aether-view-dex')).toBeVisible();
-    const realErrors = errors.filter((e) => !e.includes('402'));
+    const realErrors = errors.filter(
+      (e) => !e.startsWith('Failed to load resource: the server responded with a status of 402'),
+    );
     expect(realErrors, `console errors: ${realErrors.join('\n')}`).toHaveLength(0);
   });
 

@@ -36,7 +36,9 @@ test.describe('Forge — entity builder live demo', () => {
     await expect(page.getByText('Neon Leap')).toBeVisible();
 
     // Filter out known sandbox 402 noise if present
-    const realErrors = errors.filter((e) => !e.includes('402'));
+    const realErrors = errors.filter(
+      (e) => !e.startsWith('Failed to load resource: the server responded with a status of 402'),
+    );
     expect(realErrors, `console errors: ${realErrors.join('\n')}`).toHaveLength(0);
   });
 });
