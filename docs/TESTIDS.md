@@ -38,5 +38,15 @@ Only add IDs where tests need them (nav, modals, primary actions, key views). Do
 | `aether-forge-compile` | Compile entity |
 | `aether-modal-card` | Card detail overlay (dex) |
 | `aether-modal-card-close` | Close card modal |
+| `aether-nav-prs` | PR decision surface tab (read-only proto) |
+| `pr-spread` | PR spread section root |
+| `pr-central-card` | Central PR verdict card (opens modal) |
+| `pr-verdict` | Verdict chip on central card |
+| `pr-select-<n>` | PR picker for fixture `#n` |
+| `pr-sidecar-<id>` | Sidecar card (`checks`, `reviews`, `issues`, `files`, `stack`, `repo`) |
+| `pr-toggle-low-signal` | Expand collapsed low-signal sidecars |
+| `pr-modal` | Details dialog panel |
+| `pr-modal-close` | Close PR details dialog |
+| `pr-modal-ref` | Outbound github.com reference link in modal |
 
 When splitting `App.jsx`, **keep these IDs stable** on the moved nodes.
