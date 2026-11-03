@@ -180,7 +180,7 @@ test.describe('Arena — core', () => {
     await page.getByTestId(sel.navArena).click();
     await clickBenchCard(page, 'The Fool');
     await clickBenchCard(page, 'High Priestess');
-    await resolveClash(page, /OVERWRITES|EQUILIBRIUM|DATA COLLISION/i);
+    await resolveClash(page, /OVERWRITES|EQUILIBRIUM/i);
   });
 
   test('flush resets slots', async ({ page }) => {
@@ -226,8 +226,8 @@ test.describe('Yu-Gi-Oh! Duel MVP', () => {
     await page.getByTestId(sel.arenaRuleset).selectOption('yugioh');
 
     await expect(page.getByText('P1 Monster Zone')).toBeVisible();
-    await expect(page.getByTestId(sel.lpP1)).toHaveText(/8000/);
-    await expect(page.getByTestId(sel.lpP2)).toHaveText(/8000/);
+    await expect(page.getByTestId(sel.lpP1)).toHaveText(/LP 8000$/);
+    await expect(page.getByTestId(sel.lpP2)).toHaveText(/LP 8000$/);
     await expect(page.getByTestId(sel.arenaClash)).toBeDisabled();
 
     // Round 1
@@ -254,5 +254,19 @@ test.describe('Yu-Gi-Oh! Duel MVP', () => {
     const log = await page.getByTestId(sel.arenaLog).innerText();
     expect(log).toMatch(/EXODIA LETHAL/);
     expect(log).toMatch(/DUEL OVER/);
+
+    // Duel over blocks further play until reset
+    await flushArena(page);
+    await clickBenchCard(page, 'The Magician');
+    await clickBenchCard(page, 'The Fool');
+    await expect(page.getByTestId(sel.arenaClash)).toBeDisabled();
+    await expect(page.getByTestId(sel.lpP2)).toHaveText('P2 LP 0');
+
+    // Ruleset change resets LP and clears DUEL OVER
+    await page.getByTestId(sel.arenaRuleset).selectOption('mtg');
+    await page.getByTestId(sel.arenaRuleset).selectOption('yugioh');
+    await expect(page.getByTestId(sel.lpP1)).toHaveText('P1 LP 8000');
+    await expect(page.getByTestId(sel.lpP2)).toHaveText('P2 LP 8000');
+    await expect(page.getByTestId(sel.duelOver)).toHaveCount(0);
   });
 });

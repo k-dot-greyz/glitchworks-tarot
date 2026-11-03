@@ -81,8 +81,8 @@ test.describe('Yu-Gi-Oh! Duel MVP — start to finish', () => {
     await expect(page.getByText('Shadow Realm')).toBeVisible();
     await expect(page.getByTestId(selectors.clash)).toBeDisabled();
     // Starting LP
-    await expect(page.getByTestId(selectors.lpP1)).toHaveText(/8000/);
-    await expect(page.getByTestId(selectors.lpP2)).toHaveText(/8000/);
+    await expect(page.getByTestId(selectors.lpP1)).toHaveText(/LP 8000$/);
+    await expect(page.getByTestId(selectors.lpP2)).toHaveText(/LP 8000$/);
 
     // ── ROUND 1 ────────────────────────────────────────────
     // Player A (first empty clash slot = monster_p1) places Magician
