@@ -1,0 +1,35 @@
+[
+  {
+    "sha": "c7b7cdc8b40f34246a1833ce70eae1ad833d2e2d",
+    "filename": "src/widgets/sparkline/index.js",
+    "status": "added",
+    "additions": 96,
+    "deletions": 0,
+    "changes": 96,
+    "blob_url": "https://github.com/example-org/example-repo/blob/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/sparkline/index.js",
+    "raw_url": "https://github.com/example-org/example-repo/raw/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/sparkline/index.js",
+    "contents_url": "https://api.github.com/repos/example-org/example-repo/contents/src/widgets/sparkline/index.js?ref=05ae46a3445001055aabfb566135b28df89cdc75"
+  },
+  {
+    "sha": "33f180216f5e7a68535733d8b551a33360610ac3",
+    "filename": "src/widgets/sparkline/sparkline.test.js",
+    "status": "added",
+    "additions": 58,
+    "deletions": 0,
+    "changes": 58,
+    "blob_url": "https://github.com/example-org/example-repo/blob/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/sparkline/sparkline.test.js",
+    "raw_url": "https://github.com/example-org/example-repo/raw/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/sparkline/sparkline.test.js",
+    "contents_url": "https://api.github.com/repos/example-org/example-repo/contents/src/widgets/sparkline/sparkline.test.js?ref=05ae46a3445001055aabfb566135b28df89cdc75"
+  },
+  {
+    "sha": "22ab02dbe4c8ef0d3c90ae8178c55e690cc83aa0",
+    "filename": "src/widgets/registry.js",
+    "status": "modified",
+    "additions": 6,
+    "deletions": 1,
+    "changes": 7,
+    "blob_url": "https://github.com/example-org/example-repo/blob/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/registry.js",
+    "raw_url": "https://github.com/example-org/example-repo/raw/05ae46a3445001055aabfb566135b28df89cdc75/src/widgets/registry.js",
+    "contents_url": "https://api.github.com/repos/example-org/example-repo/contents/src/widgets/registry.js?ref=05ae46a3445001055aabfb566135b28df89cdc75"
+  }
+]

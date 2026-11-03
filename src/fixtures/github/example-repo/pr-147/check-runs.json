@@ -1,0 +1,85 @@
+{
+  "total_count": 2,
+  "check_runs": [
+    {
+      "id": 9502162690,
+      "name": "lint",
+      "node_id": "CR_ejKMynsFmAMKBj2E",
+      "head_sha": "07b4cd03fdd597aadd995116b65df56a86aa37b5",
+      "external_id": "2dc2df5e7c415944",
+      "url": "https://api.github.com/repos/example-org/example-repo/check-runs/9502162690",
+      "html_url": "https://github.com/example-org/example-repo/actions/runs/3460485953/job/9502162690",
+      "details_url": "https://github.com/example-org/example-repo/actions/runs/3460485953/job/9502162690",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-20T10:21:00Z",
+      "completed_at": "2026-10-20T10:22:30Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/example-org/example-repo/check-runs/9502162690/annotations"
+      },
+      "check_suite": {
+        "id": 3875268346
+      },
+      "app": {
+        "id": 15368,
+        "slug": "github-actions",
+        "name": "GitHub Actions",
+        "owner": {
+          "login": "github",
+          "type": "Organization"
+        }
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/example-org/example-repo/pulls/147",
+          "id": 5197731085,
+          "number": 147
+        }
+      ]
+    },
+    {
+      "id": 7893754968,
+      "name": "test",
+      "node_id": "CR_5zrzpYNRJUvL1nfU",
+      "head_sha": "07b4cd03fdd597aadd995116b65df56a86aa37b5",
+      "external_id": "b17a01d3352c1bd2",
+      "url": "https://api.github.com/repos/example-org/example-repo/check-runs/7893754968",
+      "html_url": "https://github.com/example-org/example-repo/actions/runs/5488029277/job/7893754968",
+      "details_url": "https://github.com/example-org/example-repo/actions/runs/5488029277/job/7893754968",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-20T10:21:00Z",
+      "completed_at": "2026-10-20T10:26:45Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/example-org/example-repo/check-runs/7893754968/annotations"
+      },
+      "check_suite": {
+        "id": 3875268346
+      },
+      "app": {
+        "id": 15368,
+        "slug": "github-actions",
+        "name": "GitHub Actions",
+        "owner": {
+          "login": "github",
+          "type": "Organization"
+        }
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/example-org/example-repo/pulls/147",
+          "id": 4288782916,
+          "number": 147
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "total_count": 1,
+  "check_runs": [
+    {
+      "id": 1347222346,
+      "name": "docs-lint",
+      "node_id": "CR_DBtSQfykqFQmdl1i",
+      "head_sha": "cd60a01ebc305cfbdd3ada158b8f109b50de8cbb",
+      "external_id": "693508914e599edb",
+      "url": "https://api.github.com/repos/example-org/example-repo/check-runs/1347222346",
+      "html_url": "https://github.com/example-org/example-repo/actions/runs/219088680/job/1347222346",
+      "details_url": "https://github.com/example-org/example-repo/actions/runs/219088680/job/1347222346",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-19T09:16:00Z",
+      "completed_at": "2026-10-19T09:17:12Z",
+      "output": {
+        "title": null,
+        "summary": null,
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/example-org/example-repo/check-runs/1347222346/annotations"
+      },
+      "check_suite": {
+        "id": 4484858371
+      },
+      "app": {
+        "id": 15368,
+        "slug": "github-actions",
+        "name": "GitHub Actions",
+        "owner": {
+          "login": "github",
+          "type": "Organization"
+        }
+      },
+      "pull_requests": [
+        {
+          "url": "https://api.github.com/repos/example-org/example-repo/pulls/145",
+          "id": 1331570137,
+          "number": 145
+        }
+      ]
+    }
+  ]
+}

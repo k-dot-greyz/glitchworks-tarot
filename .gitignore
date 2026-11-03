@@ -21,3 +21,6 @@ out/
 playwright-report/
 test-results/
 .playwright/
+
+# Local-only real GitHub captures for the PR surface (never commit)
+src/fixtures/github/_local/
