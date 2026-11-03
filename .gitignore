@@ -24,3 +24,5 @@ test-results/
 
 # Local-only real GitHub captures for the PR surface (never commit)
 src/fixtures/github/_local/
+src/fixtures/local/
+

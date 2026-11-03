@@ -1,26 +1,50 @@
 name: CI/CD Pipeline
 
+permissions:
+  contents: read
+
 env:
   NPM_FLAGS: --legacy-peer-deps
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, feat/review-queue]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, feat/review-queue]
 
 jobs:
-  build:
+  secrets-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Gitleaks
+        run: |
+          curl -sSL -o /tmp/gitleaks.tgz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tgz" | sha256sum -c
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks detect --redact --verbose --exit-code 1 --config .gitleaks.toml
+      - name: Review-queue fixture and token guards (pre-build)
+        run: bash scripts/ci-review-guards.sh pre
+
+  build:
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24'
+          node-version: "24"
       - name: Install dependencies
         run: npm ci ${{ env.NPM_FLAGS }}
       - name: Lint code
@@ -29,8 +53,10 @@ jobs:
         run: npm run test -- --coverage
       - name: Build project
         run: npm run build
+      - name: Review-queue token and slug guards (post-build)
+        run: bash scripts/ci-review-guards.sh post
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: production-build
           path: build/
@@ -40,17 +66,17 @@ jobs:
     needs: build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24'
+          node-version: "24"
       - name: Install dependencies
         run: npm ci ${{ env.NPM_FLAGS }}
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: production-build
           path: build/
@@ -61,33 +87,46 @@ jobs:
         env:
           CI: true
 
+  # D3: deploy stays disarmed. Job only runs on main/master push; steps no-op
+  # when DEPLOY_* secrets are unset. Do not re-arm without greyZ.
+  # secrets context is not available in jobs.<id>.if (github/needs/vars/inputs only).
   deploy:
     needs: [build, e2e]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.DEPLOY_HOST != ''
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     environment: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    env:
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: production-build
           path: build/
       - name: Deploy to Production Server
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        if: env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         run: |
-          rsync -av --delete build/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+          rsync -av --delete build/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
       - name: Notify Linear
-        if: secrets.LINEAR_API_KEY != ''
+        if: env.LINEAR_API_KEY != '' && env.DEPLOY_HOST != '' && env.DEPLOY_USER != '' && env.DEPLOY_PATH != ''
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Authorization: Bearer $LINEAR_API_KEY" \
             -d '{"event": "deploy", "branch": "${{ github.ref }}"}' \
             https://api.linear.app/webhooks/deployment
+      - name: Skip deploy when secrets are unset
+        if: env.DEPLOY_HOST == '' || env.DEPLOY_USER == '' || env.DEPLOY_PATH == ''
+        run: echo "DEPLOY_* secrets not configured; skipping production deploy."
