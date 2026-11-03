@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "bash scripts/ci-review-guards.sh pre",
     "build": "vite build",
+    "postbuild": "bash scripts/ci-review-guards.sh post",
     "preview": "vite preview",
     "lint": "eslint src",
     "test": "vitest run",

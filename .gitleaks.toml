@@ -1,0 +1,9 @@
+title = "glitchworks-tarot"
+
+[extend]
+useDefault = true
+
+# Historical vitest fixture: `formulaKey: 'mtg_power_toughness'` trips generic-api-key.
+[[allowlists]]
+description = "Vitest fixtures: formulaKey names are not secrets"
+paths = ['''src/test/fixtures/AetherTestFixtures\.js''']
