@@ -35,7 +35,7 @@ Before opening a PR, match CI: `lint` → `test -- --coverage` → `build` → `
 ```
 src/
   App.jsx                 # Single-file shell: all 4 views, nav, modals, drag-and-drop
-  dynamic_deck.json        # Default/fallback card data shipped with the app
+  default_deck.json        # Default/fallback card data shipped with the app
   domain/                  # Pure functions — no React, no I/O, no globals
     deckState.js            # hydrate/dehydrate deck, forgeCard (new-card ID gen), drawSpread (Fisher-Yates)
     deckValidation.js        # validateCard / validateDeck / parseStoredDeck (Result-style {ok, ...})

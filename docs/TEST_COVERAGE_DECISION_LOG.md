@@ -60,6 +60,41 @@ npm run build
 npm run test:e2e
 ```
 
+---
+
+## PR #31 — CLAUDE.md agent guide (merged feat)
+
+**Branch:** `greyzxcursor/ux-security-test-coverage-pr31`  
+**Trigger:** merged docs [#31](https://github.com/k-dot-greyz/glitchworks-tarot/pull/31) — `CLAUDE.md` architecture / GW-AAP short map for AI assistants  
+**Date:** 2026-11-05
+
+### User stories covered
+
+| ID | Story | Happy / sad | Impact |
+|----|-------|-------------|--------|
+| DX-CLAUDE-01 | Layout tree paths in `CLAUDE.md` exist on disk (agents do not chase hallucinated modules) | Happy | **High** — agent DX, reduces wrong-file edits |
+| DX-CLAUDE-02 | Commands block `npm run *` scripts match `package.json` | Happy | **High** — CI-parity local runs |
+| DX-CLAUDE-03 | `ci-cd.yml` order lint → test `--coverage` → build → e2e | Happy | **Medium** — doc/CI drift guard |
+| SEC-CLAUDE-01 | Required boundary anchors (never commit `.env`/keystore, `deckValidation`, superproject path) | Sad ablation | **High** — agentic instruction injection via doc strip |
+| SEC-CLAUDE-02 | Fake path in layout tree fails contract | Sad | **Medium** — redirect-to-ghost-module attack |
+
+**Attack vector (predicted):** Malicious or sloppy PR edits `CLAUDE.md` to drop submodule boundary warnings or point agents at non-existent `src/*` entrypoints so automated runs skip validation layers. Contract guard fails CI instead of silently misrouting agents.
+
+**Doc fix bundled:** `dynamic_deck.json` → `default_deck.json` in layout tree (factual drift from #31).
+
+### Test files added / updated
+
+| File | Change |
+|------|--------|
+| `scripts/claudeMdContractGuard.js` | **New** — layout path + npm script + security anchor + CI parity assertions |
+| `src/docs/claudeMdContract.test.js` | **New** — Vitest happy/sad stories |
+| `CLAUDE.md` | Correct default deck filename in layout tree |
+
+**Deferred follow-up (issue candidate):**
+
+- Playwright smoke that `CONTRIBUTING.md` / `README.md` link to `CLAUDE.md` (cosmetic DX; low signal vs guard).
+- Auto-sync check between `docs/TESTIDS.md` table and `App.jsx` testids (separate module blast radius).
+
 ## Fixture convention
 
 Per CONTRIBUTING §2.1 (zero hardcoding in domain logic), **test literals live in fixture constructors** (`AetherTestFixtures`, `ArenaE2EFixtures`) so specs override via options instead of scattered magic strings.
