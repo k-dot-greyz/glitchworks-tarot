@@ -31,6 +31,36 @@ describe('deckState', () => {
     expect(newCard.id).toBe('011');
   });
 
+  it('forgeCard ignores non-numeric ids when computing max (agentic injection)', () => {
+    const agenticDeck = [
+      { id: 'agentic-injection', name: 'Bad', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: '005', name: 'Five', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+    ];
+    const newCard = forgeCard(agenticDeck, {
+      name: 'Forged',
+      sub: '',
+      type: 'void',
+      stats: { atk: 10, def: 10, spd: 10 },
+      desc: '',
+    });
+    expect(newCard.id).toBe('006');
+  });
+
+  it('forgeCard with only non-numeric ids starts at 001 (documented collision risk)', () => {
+    const nonNumeric = [
+      { id: 'alpha', name: 'A', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+      { id: 'beta', name: 'B', sub: '', type: 'void', stats: { atk: 1, def: 1, spd: 1 }, desc: '' },
+    ];
+    const newCard = forgeCard(nonNumeric, {
+      name: 'Forged',
+      sub: '',
+      type: 'void',
+      stats: { atk: 10, def: 10, spd: 10 },
+      desc: '',
+    });
+    expect(newCard.id).toBe('001');
+  });
+
   it('drawSpread draws 3 cards from deck', () => {
     const deckWithMany = [
       ...mockDeck,
