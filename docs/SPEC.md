@@ -13,3 +13,7 @@ The **authoritative product/spec document** for Glitchworks / Aether Deck lives 
 **What the spec covers (summary):** philosophy, stack (React 18, Vite, Tailwind, lucide-react), `Card` entity schema, the four views (Dex, Arena, Oracle, Forge), aesthetics (glitch / CRT / noise).
 
 Keep implementation details (test IDs, CI jobs) in [`TESTIDS.md`](TESTIDS.md) and [`TESTING.md`](TESTING.md).
+
+## Proposed successor
+
+[`KERNEL.md`](KERNEL.md) is a proposed architecture for a data-driven TCG kernel (Rust core, JSON content packs, TypeScript display only). The clash numbers it must reproduce are locked in [`../content/aether/fixtures/clash.json`](../content/aether/fixtures/clash.json). It does **not** replace v2.1, and the kernel is not implemented. Do not start the rewrite until [`KERNEL.md`](KERNEL.md) is explicitly approved.
