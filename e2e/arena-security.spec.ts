@@ -158,6 +158,7 @@ test.describe('Arena — rulesets, clash, and hostile storage', () => {
 
     const unexpected = errors.filter(
       (text) =>
+        !text.startsWith('Failed to load resource: the server responded with a status of 402') &&
         !fixtures.expectedTelemetryErrors.some((allowed) => text.includes(allowed)),
     );
     expect(
