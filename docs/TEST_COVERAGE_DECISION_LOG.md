@@ -1,5 +1,26 @@
 # Test coverage decision log — agentic security pass
 
+## PR #47 — `scoreFormulaRegistry` alignment (2026-10-29)
+
+**Linked merge:** [#47](https://github.com/k-dot-greyz/glitchworks-tarot/pull/47) — tests score via `scoreFormulaRegistry[rulesets.*.scoreFormula]` (removed `rulesets.*.calculateScore`).
+
+| Story ID | Impact | Scenario |
+|----------|--------|----------|
+| **RS-DX-001** | High | *Happy:* Every playmat `scoreFormula` key resolves to a registry function. |
+| **RS-DX-002** | High | *Happy:* Ruleset payloads stay serializable (no embedded functions / legacy `calculateScore`). |
+| **RS-DX-003** | High | *Sad/regression:* Unit specs must not call removed `rulesets.*.calculateScore`. |
+| **RS-ABL-001** | High | *Graceful ablation:* Missing registry entry → arena base score (ATK+SPD), no throw. |
+| **RS-ABL-003** | Med | *Sad:* Incomplete card stats → `NaN` score (documented; no crash). |
+| **RS-SEC-001** | Med | *Security:* `scoreFormula` keys are not `__proto__` / pollution vectors. |
+
+**Attack surface:** Agentic or forked ruleset JSON with arbitrary `scoreFormula` strings → registry lookup miss must not throw or invoke attacker-controlled functions (static rulesets today; guard prevents drift).
+
+**Files:** `scripts/scoreFormulaRegistryGuard.js`, `scripts/scoreFormulaRegistryGuard.test.js`, `src/domain/rulesets.test.js`, `src/domain/battleEngine.test.js`.
+
+**Deferred:** E2E per-ruleset clash score assertions (8020 — Vitest integration already covers engine path).
+
+---
+
 **Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
 **Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
 **Date:** 2026-06-08
