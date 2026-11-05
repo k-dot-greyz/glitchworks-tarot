@@ -119,6 +119,62 @@ describe('usePersistedDeck', () => {
     expect(result.current.activeDeckId).toBe(persisted.activeDeckId);
   });
 
+  it('normalizes orphan activeDeckId to the first valid deck at hydration boundary', () => {
+    const orphaned = fixtures.orphanActiveDeckState();
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: JSON.stringify(orphaned),
+    });
+
+    expect(result.current.activeDeckId).toBe(fixtures.deckIds.default);
+    expect(result.current.deck).toHaveLength(2);
+    expect(result.current.decks.every((d) => Array.isArray(d.cards))).toBe(true);
+  });
+
+  it('recovers malformed deck entries missing cards array with fallback deck', () => {
+    const malformed = fixtures.malformedDeckEntryState({
+      malformedEntry: { id: fixtures.deckIds.recovered, name: 'BROKEN SHELL' },
+    });
+    const { result } = renderPersistedDeck({
+      [fixtures.storageKeys.multiDeck]: JSON.stringify(malformed),
+    });
+
+    const recovered = result.current.decks.find(
+      (d) => d.id === fixtures.deckIds.recovered,
+    );
+    expect(recovered).toBeDefined();
+    expect(recovered.name).toBe('BROKEN SHELL');
+    expect(recovered.cards).toEqual(fallbackDeck);
+  });
+
+  it('createDeck and duplicateDeck use crypto.randomUUID when available', () => {
+    const createUuid = '00000000-0000-4000-8000-000000000001';
+    const duplicateUuid = '00000000-0000-4000-8000-000000000002';
+    vi.stubGlobal('crypto', {
+      randomUUID: vi
+        .fn()
+        .mockReturnValueOnce(createUuid)
+        .mockReturnValueOnce(duplicateUuid),
+    });
+
+    const { result } = renderPersistedDeck();
+
+    let created;
+    act(() => {
+      created = result.current.createDeck('UUID DECK');
+    });
+    expect(created.id).toBe(`deck-${createUuid}`);
+
+    act(() => {
+      result.current.duplicateDeck(fixtures.deckIds.default);
+    });
+    const ids = result.current.decks.map((d) => d.id);
+    expect(ids).toContain(`deck-${createUuid}`);
+    expect(ids).toContain(`deck-${duplicateUuid}`);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    vi.unstubAllGlobals();
+  });
+
   it('survives malicious stored payloads without crashing', () => {
     const payloads = fixtures.maliciousStoredDeckPayloads();
 

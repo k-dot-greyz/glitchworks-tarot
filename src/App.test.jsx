@@ -428,4 +428,24 @@ describe('App', () => {
     // It should show a ban warning in the battle log
     expect(screen.getByTestId('aether-arena-log')).toHaveTextContent('BANNED IN MTG BATTLEFIELD');
   });
+
+  it('rename deck control survives orphan activeDeckId storage without throwing', async () => {
+    const fixturesModule = await import('./test/fixtures/AetherTestFixtures.js');
+    const harness = new fixturesModule.AetherTestFixtures();
+    const orphaned = harness.orphanActiveDeckState();
+
+    localStorage.setItem(
+      harness.storageKeys.multiDeck,
+      JSON.stringify(orphaned),
+    );
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const renameButton = screen.getByTitle('Rename Deck');
+    await user.click(renameButton);
+
+    expect(screen.getByDisplayValue('AETHER DECK')).toBeInTheDocument();
+    expect(screen.getByTestId('aether-root')).toBeInTheDocument();
+  });
 });

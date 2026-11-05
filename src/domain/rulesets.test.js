@@ -45,25 +45,47 @@ describe('rulesets', () => {
     }
   });
 
-  describe('scoreFormula (via scoreFormulaRegistry)', () => {
-    it('standard ruleset scores ATK + SPD', () => {
+  it('keeps ruleset definitions serializable (scoreFormula keys, no inline functions)', () => {
+    for (const id of requiredRulesetIds()) {
+      const ruleset = rulesets[id];
+      expect(typeof ruleset.scoreFormula).toBe('string');
+      expect(ruleset.calculateScore).toBeUndefined();
+      expect(() => JSON.stringify(ruleset)).not.toThrow();
+    }
+  });
+
+  it('maps every ruleset scoreFormula key to a registry function', () => {
+    for (const id of requiredRulesetIds()) {
+      const formulaKey = rulesets[id].scoreFormula;
+      expect(typeof scoreFormulaRegistry[formulaKey]).toBe('function');
+    }
+  });
+
+  describe('scoreFormulaRegistry', () => {
+    it('standard formula scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(scoreFormulaRegistry[rulesets.standard.scoreFormula](card)).toBe(20);
+      expect(scoreFormulaRegistry.standard_atk_spd(card)).toBe(20);
     });
 
-    it('mtg ruleset scores ATK + DEF (power + toughness)', () => {
+    it('mtg formula scores ATK + DEF (power + toughness)', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(scoreFormulaRegistry[rulesets.mtg.scoreFormula](card)).toBe(17);
+      expect(scoreFormulaRegistry.mtg_power_toughness(card)).toBe(17);
     });
 
-    it('yugioh ruleset scores ATK * 2', () => {
+    it('yugioh formula scores ATK * 2', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(scoreFormulaRegistry[rulesets.yugioh.scoreFormula](card)).toBe(24);
+      expect(scoreFormulaRegistry.yugioh_atk_x2(card)).toBe(24);
     });
 
-    it('pokemon ruleset scores ATK + SPD', () => {
+    it('pokemon formula scores ATK + SPD', () => {
       const card = fixtures.validCard({ stats: { atk: 12, def: 5, spd: 8 } });
-      expect(scoreFormulaRegistry[rulesets.pokemon.scoreFormula](card)).toBe(20);
+      expect(scoreFormulaRegistry.pokemon_atk_spd(card)).toBe(20);
+    });
+
+    it('rejects agentic formula keys without registry entries (fail-closed lookup)', () => {
+      const card = fixtures.validCard({ stats: { atk: 10, def: 10, spd: 10 } });
+      expect(scoreFormulaRegistry[fixtures.formulaIds.unknown]).toBeUndefined();
+      expect(scoreFormulaRegistry[fixtures.formulaIds.unknown]?.(card)).toBeUndefined();
     });
   });
 

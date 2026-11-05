@@ -1,55 +1,51 @@
-# Test coverage decision log — agentic security pass
+# Test coverage decision log — PR #31 (`claude/claude-md-docs-0xsxa4`)
 
-**Branch:** `greyzxc/agentic-security-test-coverage-55dc`  
-**Trigger context:** PR #21 (`feat/tcg-arena-rulesets`) — dynamic playmats, rulesets, decoupled damage engine  
-**Date:** 2026-06-08
+**Branch:** `greyzxcursor/agentic-security-test-coverage-981a`  
+**Trigger context:** CI check suite success on PR #31 — CLAUDE.md + serializable rulesets + persistence hardening  
+**Date:** 2026-09-12
 
 ## Attack surface reviewed
 
 | Surface | Risk | Mitigation tested |
 |---------|------|-------------------|
-| `localStorage` / `aether-decks` JSON | Corrupt or agentic payloads crash or poison state | `usePersistedDeck`, `parseStoredDeck`, E2E init-script corruption |
-| Arena ruleset / mode selectors | Unknown ids altering scoring or enabling clash incorrectly | `resolveBattleWithEngine` fallback + E2E ruleset switch |
-| MTG banlist boundary | Banned cards placed into clash slots | RTL (`App.test.jsx`) + E2E ban rejection |
-| `setDeck` / forge compile | Invalid cards merged into active deck | `usePersistedDeck` throw on invalid schema |
-| Ruleset `calculateScore` | Wrong formula per playmat | `rulesets.test.js` + `battleEngine` integration |
-| Oracle / deck name strings | XSS via stored card text | Schema accepts strings; React escaping assumed — documented, not snapshot-tested |
+| `scoreFormulaRegistry` lookup | Agentic/injected formula keys execute arbitrary code or crash scoring | Registry key allowlist; unknown keys fail closed; rulesets stay JSON-serializable |
+| `resolveBattleWithEngine` ordering | Mode modifier + ruleset overlay double-count or skip elemental/ability steps | Vitest: speedBlitz+mtg overlay replaces mode base; pokemon/mtg/yugioh paths unchanged |
+| Orphan `activeDeckId` in storage | UI dereferences missing deck → rename crash / white screen | `usePersistedDeck` normalizes to first deck; App rename null-safe; E2E orphan payload |
+| Malformed deck entries (null / missing `cards`) | `map`/`validateDeck` throws on hostile JSON | Recovery shell with fallback cards; E2E malformed entry |
+| `createDeck` / `duplicateDeck` ID generation | Timestamp collisions under rapid agent actions | `crypto.randomUUID` path when available (Vitest stub) |
 
 ## Prioritization (impact vs cost)
 
 | Added coverage | Impact | Cost | Speed |
 |----------------|--------|------|-------|
-| `rulesets.test.js` | High — new module, zero prior tests | Low | Vitest ~ms |
-| `battleEngine` ruleset + injection fallback | High — scoring blast radius | Low | Vitest ~ms |
-| `usePersistedDeck.test.js` | High — persistence boundary | Medium | Vitest + renderHook |
-| `deckValidation` hostile payloads | Medium — blocks corrupt merges | Low | Vitest ~ms |
-| `e2e/arena-security.spec.ts` | High — real UX clash + banlist + storage | Medium | Playwright + preview build |
-| `AetherTestFixtures` constructor harness | Medium — T+7 maintainability | Low one-time | Reused across specs |
+| Fix `rulesets.test.js` for `scoreFormulaRegistry` | **Critical** — PR broke 4 Vitest assertions | Low | ms |
+| Registry serializability + key mapping | High — new refactor blast radius | Low | ms |
+| Mode+ruleset overlay ordering | High — combat math regression | Low | ms |
+| Orphan/malformed persistence boundary | High — localStorage is hostile edge | Medium | Vitest + Playwright |
+| Rename UX with orphan active id | Medium — user-facing crash fix in PR | Low | RTL + E2E |
 
-**Deferred (follow-up, not in this PR):**
+**Deferred (follow-up if PR #31 merges):**
 
-- `Infinity` / `Number.MAX_VALUE` stat fuzzing in battle engine (schema currently allows; scoring may produce `Infinity` — needs product decision).
-- Dedicated RTL test for every TCG zone drag-drop (bench uses click path in tests; drag API untested).
-- MCP / n8n JSON boundary validation (integration configs, not user-facing runtime).
+- JSON Schema for `default_deck.json` and multi-deck persistence envelope.
+- Property-based fuzz for `scoreFormulaRegistry` inputs (`Infinity`, negative stats).
+- E2E for deck create/duplicate UUID collision under parallel tabs.
 
 ## Test files added / updated
 
 | File | Change |
 |------|--------|
-| `src/test/fixtures/AetherTestFixtures.js` | **New** — constructor-instantiated fixtures |
-| `src/domain/rulesets.test.js` | **New** |
-| `src/domain/battleEngine.test.js` | Ruleset integration + unknown id fallback |
-| `src/domain/deckValidation.test.js` | Hostile edge payloads |
-| `src/hooks/usePersistedDeck.test.js` | **New** — storage boundary |
-| `e2e/arena-security.spec.ts` | **New** — Playwright user-story flows |
+| `src/domain/rulesets.test.js` | **Updated** — `scoreFormulaRegistry` + serializability |
+| `src/domain/battleEngine.test.js` | **Updated** — mode+ruleset overlay, pokemon path |
+| `src/hooks/usePersistedDeck.test.js` | **Updated** — orphan id, malformed entry, UUID ids |
+| `src/test/fixtures/AetherTestFixtures.js` | **Updated** — formula/deck id helpers + orphan/malformed builders |
+| `src/App.test.jsx` | **Updated** — orphan rename null-safe RTL |
+| `e2e/persistence-security.spec.ts` | **New** — Playwright persistence user stories |
 
 ## Playwright user stories (priority)
 
-1. **P0 — Standard clash:** Navigate Arena → place two bench cards → Initiate Clash → log shows collision outcome.
-2. **P0 — MTG banlist:** Select MTG ruleset → click banned card → log shows ban error, clash stays disabled.
-3. **P1 — Ruleset switch:** MTG ↔ Yu-Gi-Oh reinitializes zone labels without crash.
-4. **P1 — Hostile storage:** Corrupt `aether-decks` before load → shell renders, stored value parseable or absent.
-5. **P2 — Flush / combat disabled:** Arena wipe and peaceful mode keep clash inert.
+1. **P0 — Orphan activeDeckId:** Corrupt storage points at missing deck → shell loads, selector normalizes to valid deck, Dex renders cards.
+2. **P0 — Malformed deck entry:** Deck object without `cards` array → no white screen, Dex still shows valid deck cards.
+3. **P1 — Rename with orphan id:** Rename control opens with empty name (no throw from null dereference).
 
 ## Validation commands
 
@@ -62,4 +58,4 @@ npm run test:e2e
 
 ## Fixture convention
 
-Per CONTRIBUTING §2.1 (zero hardcoding in domain logic), **test literals live in fixture constructors** (`AetherTestFixtures`, `ArenaE2EFixtures`) so specs override via options instead of scattered magic strings.
+Per CONTRIBUTING §2.1, literals live in constructor fixtures (`AetherTestFixtures`, `PersistenceE2EFixtures`) — specs override via options, not scattered magic strings.
