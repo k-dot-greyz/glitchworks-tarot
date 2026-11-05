@@ -6,10 +6,12 @@ import App from './App.jsx';
 describe('App', () => {
   beforeEach(() => {
     vi.spyOn(Math, 'random').mockReturnValue(0.42);
+    localStorage.removeItem('aether-decks');
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.removeItem('aether-decks');
   });
 
   it('renders root shell and default dex view', () => {
